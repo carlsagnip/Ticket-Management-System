@@ -276,7 +276,7 @@ function TicketForm() {
                   name="fullName"
                   type="text"
                   className="form-input"
-                  placeholder="John Doe"
+                  placeholder="Ex. Juan Dela Cruz"
                   value={formData.fullName}
                   onChange={handleChange}
                 />
@@ -313,7 +313,7 @@ function TicketForm() {
                   name="email"
                   type="email"
                   className="form-input"
-                  placeholder="john@example.com"
+                  placeholder="juandelacruz@example.com"
                   value={formData.email}
                   onChange={handleChange}
                 />
