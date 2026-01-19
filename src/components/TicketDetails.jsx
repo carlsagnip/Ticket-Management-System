@@ -19,7 +19,13 @@ import {
 } from "react-icons/fi";
 import RemarksSection from "./RemarksSection";
 
-function TicketDetails({ ticket, onClose, readOnly = false, authorName }) {
+function TicketDetails({
+  ticket,
+  onClose,
+  readOnly = false,
+  authorName,
+  allowStatusUpdate = true,
+}) {
   const [status, setStatus] = useState(ticket.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -98,13 +104,31 @@ function TicketDetails({ ticket, onClose, readOnly = false, authorName }) {
               {ticket.ticket_id}
             </p>
           </div>
-          <button
-            className="btn btn-icon btn-ghost"
-            onClick={onClose}
-            style={{ width: "36px", height: "36px" }}
-          >
-            <FiX size={20} />
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <span
+              className={`badge badge-${status.toLowerCase().replace(" ", "-")}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.375rem",
+                fontSize: "0.875rem",
+                padding: "0.375rem 0.75rem",
+              }}
+            >
+              {status === "Open" && <FiFileText />}
+              {status === "In Progress" && <FiClock />}
+              {status === "Resolved" && <FiCheckCircle />}
+              {status === "Closed" && <FiXCircle />}
+              {status}
+            </span>
+            <button
+              className="btn btn-icon btn-ghost"
+              onClick={onClose}
+              style={{ width: "36px", height: "36px" }}
+            >
+              <FiX size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -157,6 +181,37 @@ function TicketDetails({ ticket, onClose, readOnly = false, authorName }) {
                 }}
               >
                 {ticket.full_name}
+              </p>
+            </div>
+
+            <div>
+              <label
+                style={{
+                  fontSize: "0.75rem",
+                  textTransform: "uppercase",
+                  color: "var(--text-muted)",
+                  fontWeight: "600",
+                  letterSpacing: "0.05em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.375rem",
+                }}
+              >
+                <FiInfo size={14} />
+                Status
+              </label>
+              <p
+                style={{
+                  fontSize: "1rem",
+                  color: "var(--text-primary)",
+                  margin: "0.5rem 0 0",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                {status}
               </p>
             </div>
 
@@ -389,8 +444,8 @@ function TicketDetails({ ticket, onClose, readOnly = false, authorName }) {
             authorName={authorName}
           />
 
-          {/* Status Change - Only show if not readOnly */}
-          {!readOnly && (
+          {/* Status Change - Only show if not readOnly and updates allowed */}
+          {!readOnly && allowStatusUpdate && (
             <div
               style={{
                 borderTop: "1px solid var(--border)",

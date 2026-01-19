@@ -829,6 +829,7 @@ function Preview() {
               ticket={selectedTicket}
               onClose={handleCloseDetails}
               authorName="Developer"
+              allowStatusUpdate={false}
             />
           )}
 
