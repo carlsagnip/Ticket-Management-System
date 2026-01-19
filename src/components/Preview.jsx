@@ -345,9 +345,10 @@ function Preview() {
     <div
       className="page-container"
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       <div
