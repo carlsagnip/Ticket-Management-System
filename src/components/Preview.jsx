@@ -811,7 +811,6 @@ function Preview() {
             <TicketDetails
               ticket={selectedTicket}
               onClose={handleCloseDetails}
-              readOnly={true}
             />
           )}
 

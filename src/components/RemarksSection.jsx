@@ -39,7 +39,7 @@ const RemarksSection = ({ ticketId, readOnly = false }) => {
         {
           ticket_id: ticketId,
           content: newRemark.trim(),
-          author_name: "Admin", // Ideally fetch from auth session
+          author_name: "Developer", // Ideally fetch from auth session
         },
       ]);
 
