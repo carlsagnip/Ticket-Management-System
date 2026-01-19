@@ -16,6 +16,27 @@ const RemarksSection = ({ ticketId, readOnly = false, authorName }) => {
         // console.log("Current user:", user);
       }
     });
+
+    // Realtime subscription for remarks
+    const channel = supabase
+      .channel(`comments_channel_${ticketId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "ticket_comments",
+          filter: `ticket_id=eq.${ticketId}`,
+        },
+        () => {
+          fetchRemarks();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [ticketId]);
 
   const fetchRemarks = async () => {

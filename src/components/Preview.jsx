@@ -37,10 +37,26 @@ function Preview() {
   useEffect(() => {
     fetchTickets();
     fetchOffices();
+
+    // Realtime subscription for tickets
+    const channel = supabase
+      .channel("tickets_channel")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tickets" },
+        () => {
+          fetchTickets(false);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const fetchTickets = async () => {
-    setLoading(true);
+  const fetchTickets = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const { data, error } = await supabase
         .from("tickets")
@@ -58,7 +74,7 @@ function Preview() {
     } catch (error) {
       console.error("Error fetching tickets:", error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
