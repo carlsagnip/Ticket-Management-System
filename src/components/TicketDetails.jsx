@@ -19,7 +19,7 @@ import {
 } from "react-icons/fi";
 import RemarksSection from "./RemarksSection";
 
-function TicketDetails({ ticket, onClose }) {
+function TicketDetails({ ticket, onClose, readOnly = false }) {
   const [status, setStatus] = useState(ticket.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -383,49 +383,51 @@ function TicketDetails({ ticket, onClose }) {
           </div>
 
           {/* Remarks Section */}
-          <RemarksSection ticketId={ticket.id} />
+          <RemarksSection ticketId={ticket.id} readOnly={readOnly} />
 
-          {/* Status Change */}
-          <div
-            style={{
-              borderTop: "1px solid var(--border)",
-              paddingTop: "1.5rem",
-            }}
-          >
-            <label
-              className="form-label"
-              htmlFor="status"
-              style={{ marginBottom: "0.75rem" }}
+          {/* Status Change - Only show if not readOnly */}
+          {!readOnly && (
+            <div
+              style={{
+                borderTop: "1px solid var(--border)",
+                paddingTop: "1.5rem",
+              }}
             >
-              Update Status
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {[
-                { label: "Open", icon: <FiFileText size={16} /> },
-                { label: "In Progress", icon: <FiClock size={16} /> },
-                { label: "Resolved", icon: <FiCheckCircle size={16} /> },
-                { label: "Closed", icon: <FiXCircle size={16} /> },
-              ].map(({ label, icon }) => (
-                <button
-                  key={label}
-                  className={`btn btn-small ${status === label ? "btn-primary" : "btn-ghost"}`}
-                  onClick={() => handleStatusChange(label)}
-                  disabled={saving}
-                  style={{ gap: "0.375rem" }}
-                >
-                  {status === label && saving ? (
-                    <div
-                      className="spinner"
-                      style={{ width: "14px", height: "14px" }}
-                    ></div>
-                  ) : (
-                    icon
-                  )}
-                  {label}
-                </button>
-              ))}
+              <label
+                className="form-label"
+                htmlFor="status"
+                style={{ marginBottom: "0.75rem" }}
+              >
+                Update Status
+              </label>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {[
+                  { label: "Open", icon: <FiFileText size={16} /> },
+                  { label: "In Progress", icon: <FiClock size={16} /> },
+                  { label: "Resolved", icon: <FiCheckCircle size={16} /> },
+                  { label: "Closed", icon: <FiXCircle size={16} /> },
+                ].map(({ label, icon }) => (
+                  <button
+                    key={label}
+                    className={`btn btn-small ${status === label ? "btn-primary" : "btn-ghost"}`}
+                    onClick={() => handleStatusChange(label)}
+                    disabled={saving}
+                    style={{ gap: "0.375rem" }}
+                  >
+                    {status === label && saving ? (
+                      <div
+                        className="spinner"
+                        style={{ width: "14px", height: "14px" }}
+                      ></div>
+                    ) : (
+                      icon
+                    )}
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { FiMessageSquare, FiSend, FiUser, FiClock } from "react-icons/fi";
 
-const RemarksSection = ({ ticketId }) => {
+const RemarksSection = ({ ticketId, readOnly = false }) => {
   const [Remarks, setRemarks] = useState([]);
   const [newRemark, setNewRemark] = useState("");
   const [loading, setLoading] = useState(true);
@@ -192,60 +192,62 @@ const RemarksSection = ({ ticketId }) => {
         )}
       </div>
 
-      {/* Add Remark Field */}
-      <form onSubmit={handleSubmit} style={{ position: "relative" }}>
-        <textarea
-          placeholder="Type a Remark..."
-          value={newRemark}
-          onChange={(e) => setNewRemark(e.target.value)}
-          style={{
-            width: "100%",
-            borderRadius: "8px",
-            border: "1px solid #cbd5e1",
-            padding: "0.75rem 3rem 0.75rem 0.75rem",
-            minHeight: "44px",
-            fontSize: "0.9375rem",
-            resize: "vertical",
-            fontFamily: "inherit",
-          }}
-          disabled={submitting}
-        />
-        <button
-          type="submit"
-          className="btn-icon"
-          disabled={!newRemark.trim() || submitting}
-          style={{
-            position: "absolute",
-            right: "8px",
-            bottom: "10px", // Align to bottom if multiline
-            background: newRemark.trim() ? "var(--primary)" : "#e2e8f0",
-            color: newRemark.trim() ? "white" : "#94a3b8",
-            width: "32px",
-            height: "32px",
-            borderRadius: "6px",
-            border: "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: newRemark.trim() ? "pointer" : "default",
-            transition: "all 0.2s",
-          }}
-        >
-          {submitting ? (
-            <div
-              className="spinner"
-              style={{
-                width: "14px",
-                height: "14px",
-                borderTopColor: "white",
-                borderRightColor: "white",
-              }}
-            ></div>
-          ) : (
-            <FiSend size={14} />
-          )}
-        </button>
-      </form>
+      {/* Add Remark Field - Only show if not readOnly */}
+      {!readOnly && (
+        <form onSubmit={handleSubmit} style={{ position: "relative" }}>
+          <textarea
+            placeholder="Type a Remark..."
+            value={newRemark}
+            onChange={(e) => setNewRemark(e.target.value)}
+            style={{
+              width: "100%",
+              borderRadius: "8px",
+              border: "1px solid #cbd5e1",
+              padding: "0.75rem 3rem 0.75rem 0.75rem",
+              minHeight: "44px",
+              fontSize: "0.9375rem",
+              resize: "vertical",
+              fontFamily: "inherit",
+            }}
+            disabled={submitting}
+          />
+          <button
+            type="submit"
+            className="btn-icon"
+            disabled={!newRemark.trim() || submitting}
+            style={{
+              position: "absolute",
+              right: "8px",
+              bottom: "10px", // Align to bottom if multiline
+              background: newRemark.trim() ? "var(--primary)" : "#e2e8f0",
+              color: newRemark.trim() ? "white" : "#94a3b8",
+              width: "32px",
+              height: "32px",
+              borderRadius: "6px",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: newRemark.trim() ? "pointer" : "default",
+              transition: "all 0.2s",
+            }}
+          >
+            {submitting ? (
+              <div
+                className="spinner"
+                style={{
+                  width: "14px",
+                  height: "14px",
+                  borderTopColor: "white",
+                  borderRightColor: "white",
+                }}
+              ></div>
+            ) : (
+              <FiSend size={14} />
+            )}
+          </button>
+        </form>
+      )}
     </div>
   );
 };

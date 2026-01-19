@@ -546,25 +546,57 @@ function TicketForm() {
         </div>
       </div>
 
-      {/* Settings Icon (Bottom Right) - Admin Entry */}
-      <button
-        onClick={() => navigate("/admin/login")}
-        className="btn btn-icon"
+      {/* Admin Controls */}
+      <div
         style={{
           position: "fixed",
           bottom: "2rem",
           right: "2rem",
-          background: "var(--secondary)",
-          border: "1px solid var(--border)",
-          width: "48px",
-          height: "48px",
-          boxShadow: "var(--shadow-lg)",
+          display: "flex",
+          gap: "1rem",
           zIndex: 100,
         }}
-        title="Admin Login"
       >
-        <FiSettings size={24} style={{ color: "white" }} />
-      </button>
+        <button
+          onClick={() => navigate("/preview")}
+          className="btn btn-icon"
+          style={{
+            background: "var(--primary)",
+            border: "1px solid var(--border)",
+            width: "48px",
+            height: "48px",
+            boxShadow: "var(--shadow-lg)",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+          title="Preview Tickets"
+        >
+          <FiFileText size={24} style={{ color: "white" }} />
+        </button>
+
+        <button
+          onClick={() => navigate("/admin/login")}
+          className="btn btn-icon"
+          style={{
+            background: "var(--secondary)",
+            border: "1px solid var(--border)",
+            width: "48px",
+            height: "48px",
+            boxShadow: "var(--shadow-lg)",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+          title="Admin Login"
+        >
+          <FiSettings size={24} style={{ color: "white" }} />
+        </button>
+      </div>
 
       {/* Success Modal */}
       {showSuccess && (

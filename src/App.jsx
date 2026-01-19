@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 import TicketForm from "./pages/TicketForm";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import Preview from "./components/Preview";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -43,6 +44,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<TicketForm />} />
+        <Route path="/preview" element={<Preview />} />
         <Route
           path="/admin/login"
           element={
