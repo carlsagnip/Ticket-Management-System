@@ -773,7 +773,11 @@ function TicketList() {
 
       {/* Ticket Details Modal */}
       {selectedTicket && (
-        <TicketDetails ticket={selectedTicket} onClose={handleCloseDetails} />
+        <TicketDetails
+          ticket={selectedTicket}
+          onClose={handleCloseDetails}
+          authorName="Admin"
+        />
       )}
     </div>
   );

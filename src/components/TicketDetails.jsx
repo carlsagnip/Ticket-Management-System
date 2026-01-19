@@ -19,7 +19,7 @@ import {
 } from "react-icons/fi";
 import RemarksSection from "./RemarksSection";
 
-function TicketDetails({ ticket, onClose, readOnly = false }) {
+function TicketDetails({ ticket, onClose, readOnly = false, authorName }) {
   const [status, setStatus] = useState(ticket.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -383,7 +383,11 @@ function TicketDetails({ ticket, onClose, readOnly = false }) {
           </div>
 
           {/* Remarks Section */}
-          <RemarksSection ticketId={ticket.id} readOnly={readOnly} />
+          <RemarksSection
+            ticketId={ticket.id}
+            readOnly={readOnly}
+            authorName={authorName}
+          />
 
           {/* Status Change - Only show if not readOnly */}
           {!readOnly && (

@@ -812,6 +812,7 @@ function Preview() {
             <TicketDetails
               ticket={selectedTicket}
               onClose={handleCloseDetails}
+              authorName="Developer"
             />
           )}
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { FiMessageSquare, FiSend, FiUser, FiClock } from "react-icons/fi";
 
-const RemarksSection = ({ ticketId, readOnly = false }) => {
+const RemarksSection = ({ ticketId, readOnly = false, authorName }) => {
   const [Remarks, setRemarks] = useState([]);
   const [newRemark, setNewRemark] = useState("");
   const [loading, setLoading] = useState(true);
@@ -10,6 +10,12 @@ const RemarksSection = ({ ticketId, readOnly = false }) => {
 
   useEffect(() => {
     fetchRemarks();
+    // Fetch current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        // console.log("Current user:", user);
+      }
+    });
   }, [ticketId]);
 
   const fetchRemarks = async () => {
@@ -35,20 +41,31 @@ const RemarksSection = ({ ticketId, readOnly = false }) => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("ticket_comments").insert([
-        {
-          ticket_id: ticketId,
-          content: newRemark.trim(),
-          author_name: "Developer", // Ideally fetch from auth session
-        },
-      ]);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const commentData = {
+        ticket_id: ticketId,
+        content: newRemark.trim(),
+        author_name:
+          authorName ||
+          user?.user_metadata?.full_name ||
+          user?.email ||
+          "Admin",
+        // user_id: user?.id // Uncomment if RLS requires it and column exists
+      };
+
+      const { error } = await supabase
+        .from("ticket_comments")
+        .insert([commentData]);
 
       if (error) throw error;
       setNewRemark("");
       fetchRemarks(); // Refresh list
     } catch (error) {
       console.error("Error adding Remark:", error);
-      alert("Failed to add Remark");
+      alert(`Failed to add Remark: ${error.message}`);
     } finally {
       setSubmitting(false);
     }
