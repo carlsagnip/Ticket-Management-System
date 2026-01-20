@@ -13,6 +13,7 @@ import {
   FiCheckCircle,
   FiX,
 } from "react-icons/fi";
+import SearchableSelect from "../components/SearchableSelect";
 
 function TicketForm() {
   const navigate = useNavigate();
@@ -362,47 +363,17 @@ function TicketForm() {
                 }}
               >
                 {/* Office */}
-                <div className="form-group">
-                  <label
-                    className="form-label"
-                    htmlFor="officeId"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      textTransform: "none",
-                    }}
-                  >
-                    <FiMapPin size={16} />
-                    Office
-                    <span style={{ color: "var(--danger)" }}>*</span>
-                  </label>
-                  <select
-                    id="officeId"
-                    name="officeId"
-                    className="form-select"
-                    value={formData.officeId}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select an office</option>
-                    {offices.map((office) => (
-                      <option key={office.id} value={office.id}>
-                        {office.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.officeId && (
-                    <p
-                      style={{
-                        color: "var(--danger)",
-                        fontSize: "0.875rem",
-                        marginTop: "0.25rem",
-                      }}
-                    >
-                      {errors.officeId}
-                    </p>
-                  )}
-                </div>
+                <SearchableSelect
+                  label="Office"
+                  icon={FiMapPin}
+                  options={offices}
+                  value={formData.officeId}
+                  onChange={handleChange}
+                  placeholder="Select an office"
+                  error={errors.officeId}
+                  required
+                  modal
+                />
 
                 {/* Category */}
                 <div className="form-group">
