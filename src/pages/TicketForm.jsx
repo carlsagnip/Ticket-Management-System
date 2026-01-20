@@ -241,7 +241,7 @@ function TicketForm() {
   return (
     <div className="page-container">
       <div className="container">
-        <div style={{ maxWidth: "800px", margin: "2rem auto" }}>
+        <div className="ticket-form-container">
           {/* Header */}
           <div className="text-center" style={{ marginBottom: "2rem" }}>
             <div
@@ -355,13 +355,7 @@ function TicketForm() {
               </div>
 
               {/* Office & Category Row */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1rem",
-                }}
-              >
+              <div className="form-grid-row">
                 {/* Office */}
                 <SearchableSelect
                   label="Office"
@@ -552,16 +546,7 @@ function TicketForm() {
       </div>
 
       {/* Admin Controls */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: "2rem",
-          right: "2rem",
-          display: "flex",
-          gap: "1rem",
-          zIndex: 100,
-        }}
-      >
+      <div className="admin-floating-controls">
         <button
           onClick={() => navigate("/preview")}
           className="btn btn-icon"

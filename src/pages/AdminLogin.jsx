@@ -42,15 +42,7 @@ function AdminLogin() {
   return (
     <div className="page-container">
       <div className="container">
-        <div
-          style={{
-            maxWidth: "480px",
-            margin: "4rem auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: "2rem",
-          }}
-        >
+        <div className="auth-container">
           {/* Header with Icon */}
           <div className="text-center">
             <div
