@@ -13,6 +13,9 @@ const SearchableSelect = ({
   label,
   required = false,
   modal = false,
+  name = "officeId", // Default for backward compatibility
+  style = {},
+  modalWidth = "300px",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,7 +62,7 @@ const SearchableSelect = ({
   }, [isOpen, modal]);
 
   const handleSelect = (option) => {
-    onChange({ target: { name: "officeId", value: option.id } });
+    onChange({ target: { name: name, value: option.id } });
     setIsOpen(false);
     setSearchTerm("");
   };
@@ -73,7 +76,7 @@ const SearchableSelect = ({
   // Helper to clear selection if needed (optional feature)
   const clearSelection = (e) => {
     e.stopPropagation();
-    onChange({ target: { name: "officeId", value: "" } });
+    onChange({ target: { name: name, value: "" } });
   };
 
   // Render logic for the list container
@@ -104,7 +107,7 @@ const SearchableSelect = ({
               borderRadius: "var(--radius-lg)", // Larger radius for modal
               boxShadow: "var(--shadow-xl)",
               width: "100%",
-              maxWidth: "300px", // Smaller width
+              maxWidth: modalWidth, // Customized modal width
               maxHeight: "80vh",
               display: "flex",
               flexDirection: "column",
@@ -288,7 +291,11 @@ const SearchableSelect = ({
 
   return (
     <>
-      <div className="form-group" ref={dropdownRef}>
+      <div
+        className="form-group"
+        ref={dropdownRef}
+        style={{ minWidth: 0, ...style }}
+      >
         {label && (
           <label
             className="form-label"
@@ -316,7 +323,7 @@ const SearchableSelect = ({
             position: "relative",
             cursor: disabled ? "not-allowed" : "pointer",
             border: error ? "1px solid var(--danger)" : undefined,
-            backgroundColor: "var(--bg-input)", // Ensure background matches inputs
+            backgroundColor: "var(--bg-card)", // Ensure background matches inputs
           }}
         >
           <div
@@ -328,9 +335,21 @@ const SearchableSelect = ({
               color: selectedOption
                 ? "var(--text-primary)"
                 : "var(--text-muted)",
+              minWidth: 0, // Critical for preventing flex item from expanding
             }}
           >
-            {selectedOption ? selectedOption.name : placeholder}
+            <span
+              title={selectedOption ? selectedOption.name : ""}
+              style={{
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                width: "100%",
+                display: "block",
+              }}
+            >
+              {selectedOption ? selectedOption.name : placeholder}
+            </span>
           </div>
 
           <div

@@ -16,6 +16,7 @@ import {
   FiCalendar,
   FiDownload,
 } from "react-icons/fi";
+import SearchableSelect from "../components/SearchableSelect";
 
 function TicketList() {
   const [tickets, setTickets] = useState([]);
@@ -654,28 +655,28 @@ function TicketList() {
 
         {/* Dropdowns */}
         <div style={{ display: "flex", gap: "0.5rem" }}>
-          <select
-            className="form-select"
+          <SearchableSelect
+            options={[
+              { id: "newest", name: "Newest First" },
+              { id: "oldest", name: "Oldest First" },
+            ]}
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            style={{ minWidth: "150px" }}
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-          </select>
-          <select
-            className="form-select"
+            name="sortBy"
+            placeholder="Sort By"
+            style={{ width: "170px", marginBottom: 0 }}
+            modal
+          />
+          <SearchableSelect
+            options={[{ id: "All", name: "All Offices" }, ...offices]}
             value={officeFilter}
             onChange={(e) => setOfficeFilter(e.target.value)}
-            style={{ minWidth: "150px" }}
-          >
-            <option value="All">All Offices</option>
-            {offices.map((office) => (
-              <option key={office.id} value={office.id}>
-                {office.name}
-              </option>
-            ))}
-          </select>
+            name="officeFilter"
+            placeholder="All Offices"
+            style={{ width: "170px", marginBottom: 0 }}
+            modal
+            modalWidth="500px"
+          />
           <button
             className="btn btn-success"
             onClick={exportToPDF}
