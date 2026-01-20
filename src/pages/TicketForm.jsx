@@ -121,81 +121,115 @@ function TicketForm() {
 
     setLoading(true);
 
-    try {
-      // Get current ticket count for ID generation
-      const { count } = await supabase
-        .from("tickets")
-        .select("*", { count: "exact", head: true });
+    const MAX_RETRIES = 3;
+    let attempts = 0;
+    let submitted = false;
+    let lastError = null;
 
-      const ticketCount = count || 0;
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    while (attempts < MAX_RETRIES && !submitted) {
+      try {
+        attempts++;
 
-      const { data, error } = await supabase
-        .from("tickets")
-        .insert([
-          {
-            full_name: formData.fullName,
-            email: formData.email || null,
-            office_id: formData.officeId,
-            category_id: formData.categoryId,
-            priority: formData.priority,
-            subject: formData.subject,
-            description: formData.description,
-            status: "Open", // Default status
-            // Generate ticket ID with incrementing number
-            // Format: TCKT-YYYYMMDD-COUNT
-            ticket_id: `TCKT-${dateStr}${ticketCount + 1}`,
-          },
-        ])
-        .select()
-        .single();
+        // Get current ticket count for ID generation
+        const { count, error: countError } = await supabase
+          .from("tickets")
+          .select("*", { count: "exact", head: true });
 
-      if (error) throw error;
+        if (countError) throw countError;
 
-      // Show success message with ticket ID
-      setTicketId(data.ticket_id);
-      setShowSuccess(true);
+        const ticketCount = count || 0;
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        // Request ID format: TCKT-${dateStr}${ticketCount + 1}
+        const newTicketId = `TCKT-${dateStr}${ticketCount + 1}`;
 
-      // Reset form
-      setFormData({
-        fullName: "",
-        email: "",
-        officeId: "",
-        categoryId: "",
-        priority: "Medium",
-        subject: "",
-        description: "",
-      });
-    } catch (error) {
-      console.error("❌ Error submitting ticket:", error);
-      console.error("Error details:", {
-        message: error.message,
-        hint: error.hint,
-        details: error.details,
-        code: error.code,
-      });
+        const { data, error } = await supabase
+          .from("tickets")
+          .insert([
+            {
+              full_name: formData.fullName,
+              email: formData.email || null,
+              office_id: formData.officeId,
+              category_id: formData.categoryId,
+              priority: formData.priority,
+              subject: formData.subject,
+              description: formData.description,
+              status: "Open", // Default status
+              ticket_id: newTicketId,
+            },
+          ])
+          .select()
+          .single();
 
-      // More specific error messages based on the error
+        if (error) {
+          // Check for unique violation (Postgres error 23505)
+          if (error.code === "23505" && attempts < MAX_RETRIES) {
+            console.log(
+              `Concurrency conflict detected. Retrying... (Attempt ${attempts})`,
+            );
+            // Short random delay to reduce chance of another collision
+            await new Promise((resolve) =>
+              setTimeout(resolve, 300 + Math.random() * 200),
+            );
+            continue;
+          }
+          throw error;
+        }
+
+        // If we get here, success!
+        submitted = true;
+        setTicketId(data.ticket_id);
+        setShowSuccess(true);
+
+        // Reset form
+        setFormData({
+          fullName: "",
+          email: "",
+          officeId: "",
+          categoryId: "",
+          priority: "Medium",
+          subject: "",
+          description: "",
+        });
+      } catch (error) {
+        lastError = error;
+        console.error(
+          `❌ Error submitting ticket (Attempt ${attempts}):`,
+          error,
+        );
+
+        // If it's not a concurrency error, or we ran out of retries, stop trying
+        if (error.code !== "23505" || attempts >= MAX_RETRIES) {
+          break;
+        }
+      }
+    }
+
+    if (!submitted) {
+      console.error("Final error details:", lastError);
+
+      // More specific error messages
       let errorMessage = "Failed to submit ticket. Please try again.";
 
-      if (error.message?.includes("JWT")) {
+      if (lastError?.message?.includes("JWT")) {
         errorMessage =
           "Authentication error. Please check your Supabase credentials in .env.local";
-      } else if (error.message?.includes("violates row-level security")) {
+      } else if (lastError?.message?.includes("violates row-level security")) {
         errorMessage =
           "Database permission error. Please ensure the RLS policies are set up correctly.";
-      } else if (error.message?.includes("null value in column")) {
+      } else if (lastError?.message?.includes("null value in column")) {
         errorMessage =
           "Missing required field in database. Please check the schema.";
-      } else if (error.code === "PGRST116") {
+      } else if (lastError?.code === "PGRST116") {
         errorMessage =
           "Network error. Please check your Supabase URL and internet connection.";
+      } else if (lastError?.code === "23505") {
+        errorMessage = "System is busy. Please try submitting again.";
       }
 
       setErrors({ submit: errorMessage });
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   const closeSuccessModal = () => {
