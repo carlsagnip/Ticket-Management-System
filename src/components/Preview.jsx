@@ -831,6 +831,7 @@ function Preview() {
               onClose={handleCloseDetails}
               authorName="Developer"
               allowStatusUpdate={false}
+              allowAttachmentEdit={false}
             />
           )}
 

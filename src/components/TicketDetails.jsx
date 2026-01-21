@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
+
 import {
   FiAlertCircle,
   FiCalendar,
   FiCheckCircle,
   FiClock,
+  FiDownload,
   FiFileText,
   FiInfo,
   FiMail,
   FiMapPin,
+  FiPaperclip,
   FiSearch,
   FiTag,
   FiToggleLeft,
@@ -18,6 +21,7 @@ import {
   FiXCircle,
 } from "react-icons/fi";
 import RemarksSection from "./RemarksSection";
+import imageCompression from "browser-image-compression";
 
 function TicketDetails({
   ticket,
@@ -25,11 +29,90 @@ function TicketDetails({
   readOnly = false,
   authorName,
   allowStatusUpdate = true,
+  allowAttachmentEdit = true,
 }) {
   const [status, setStatus] = useState(ticket.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [attachmentUrl, setAttachmentUrl] = useState(ticket.attachment_url);
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+
+  const deleteAttachmentFromStorage = async (url) => {
+    if (!url) return;
+    try {
+      const path = url.split("ticket-attachments/")[1];
+      if (path) {
+        const decodedPath = decodeURIComponent(path);
+        console.log("Deleting file from storage:", decodedPath);
+        const { error } = await supabase.storage
+          .from("ticket-attachments")
+          .remove([decodedPath]);
+        if (error) console.error("Error deleting file:", error);
+      }
+    } catch (err) {
+      console.error("Error in deleteAttachmentFromStorage:", err);
+    }
+  };
+
+  const handleImageUpload = async (event) => {
+    const imageFile = event.target.files[0];
+    if (!imageFile) return;
+
+    setUploading(true);
+    setError("");
+
+    try {
+      // Delete existing attachment if present
+      if (attachmentUrl) {
+        await deleteAttachmentFromStorage(attachmentUrl);
+      }
+
+      console.log("Original size:", imageFile.size / 1024 / 1024, "MB");
+
+      const options = {
+        maxSizeMB: 0.15, // 150KB
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+
+      const compressedFile = await imageCompression(imageFile, options);
+      console.log("Compressed size:", compressedFile.size / 1024 / 1024, "MB");
+
+      // Upload to Supabase Storage
+      const fileName = `${ticket.id}/${Date.now()}-${imageFile.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("ticket-attachments")
+        .upload(fileName, compressedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get Public URL
+      const { data: publicUrlData } = supabase.storage
+        .from("ticket-attachments")
+        .getPublicUrl(fileName);
+
+      const publicUrl = publicUrlData.publicUrl;
+
+      // Update Ticket Record
+      const { error: updateError } = await supabase
+        .from("tickets")
+        .update({ attachment_url: publicUrl })
+        .eq("id", ticket.id);
+
+      if (updateError) throw updateError;
+
+      setAttachmentUrl(publicUrl);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2000);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      setError("Failed to upload image.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleStatusChange = async (newStatus) => {
     setStatus(newStatus);
@@ -437,6 +520,183 @@ function TicketDetails({
             </div>
           </div>
 
+          {/* Attachment Section */}
+          <div style={{ marginBottom: "1.5rem" }}>
+            <label
+              style={{
+                fontSize: "0.75rem",
+                textTransform: "uppercase",
+                color: "var(--text-muted)",
+                fontWeight: "600",
+                letterSpacing: "0.05em",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.375rem",
+                marginBottom: "0.5rem",
+              }}
+            >
+              <FiPaperclip size={14} />
+              Attachment
+            </label>
+            <div
+              style={{
+                border: "1px dashed var(--border)",
+                borderRadius: "var(--radius-md)",
+                padding: "1rem",
+                background: "var(--bg-card)",
+              }}
+            >
+              {attachmentUrl ? (
+                <div style={{ position: "relative" }}>
+                  <img
+                    src={attachmentUrl}
+                    alt="Ticket Attachment"
+                    onClick={() => setImagePreviewOpen(true)}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "300px",
+                      borderRadius: "var(--radius-sm)",
+                      display: "block",
+                      cursor: "zoom-in",
+                    }}
+                    title="Click to enlarge"
+                  />
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      display: "flex",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <button
+                      className="btn btn-small btn-primary"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const response = await fetch(attachmentUrl);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement("a");
+                          link.href = url;
+                          link.download = `attachment-${ticket.ticket_id}.${blob.type.split("/")[1] || "jpg"}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                        } catch (error) {
+                          console.error("Error downloading image:", error);
+                          // Fallback to opening in new tab if fetch fails
+                          window.open(attachmentUrl, "_blank");
+                        }
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "32px",
+                        height: "32px",
+                        padding: 0,
+                        cursor: "pointer",
+                      }}
+                      title="Download image"
+                    >
+                      <FiDownload size={16} />
+                    </button>
+
+                    {!readOnly && allowAttachmentEdit && (
+                      <button
+                        className="btn btn-small btn-danger"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (
+                            !confirm(
+                              "Are you sure you want to remove this attachment?",
+                            )
+                          )
+                            return;
+                          try {
+                            // Delete from storage first
+                            await deleteAttachmentFromStorage(attachmentUrl);
+
+                            const { error: updateError } = await supabase
+                              .from("tickets")
+                              .update({ attachment_url: null })
+                              .eq("id", ticket.id);
+
+                            if (updateError) throw updateError;
+
+                            setAttachmentUrl(null);
+                          } catch (e) {
+                            console.error(e);
+                            setError("Failed to remove attachment");
+                          }
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "32px",
+                          height: "32px",
+                          padding: 0,
+                        }}
+                        title="Remove attachment"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                !readOnly &&
+                allowAttachmentEdit && (
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: "none" }}
+                      id="file-upload"
+                      disabled={uploading}
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className={`btn ${uploading ? "btn-disabled" : "btn-secondary"}`}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        cursor: uploading ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {uploading ? (
+                        <>
+                          <div
+                            className="spinner"
+                            style={{ width: "16px", height: "16px" }}
+                          ></div>
+                          Compressing & Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <FiPaperclip />
+                          Attach Image (Max 150KB Compressed)
+                        </>
+                      )}
+                    </label>
+                  </div>
+                )
+              )}
+              {!attachmentUrl && (readOnly || !allowAttachmentEdit) && (
+                <p style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+                  No attachment provided.
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* Remarks Section */}
           <RemarksSection
             ticketId={ticket.id}
@@ -497,6 +757,53 @@ function TicketDetails({
           </button>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      {imagePreviewOpen && attachmentUrl && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            zIndex: 1000,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "2rem",
+          }}
+          onClick={() => setImagePreviewOpen(false)}
+        >
+          <button
+            onClick={() => setImagePreviewOpen(false)}
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              background: "transparent",
+              border: "none",
+              color: "white",
+              cursor: "pointer",
+            }}
+          >
+            <FiX size={32} />
+          </button>
+
+          <img
+            src={attachmentUrl}
+            alt="Full size attachment"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              borderRadius: "4px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
