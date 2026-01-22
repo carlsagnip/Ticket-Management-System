@@ -7,11 +7,13 @@ import {
   FiCheckCircle,
   FiClock,
   FiDownload,
+  FiEdit2,
   FiFileText,
   FiInfo,
   FiMail,
   FiMapPin,
   FiPaperclip,
+  FiSave,
   FiSearch,
   FiTag,
   FiToggleLeft,
@@ -38,6 +40,11 @@ function TicketDetails({
   const [uploading, setUploading] = useState(false);
   const [attachmentUrl, setAttachmentUrl] = useState(ticket.attachment_url);
   const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+  const [editableDescription, setEditableDescription] = useState(
+    ticket.description,
+  );
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [savingDescription, setSavingDescription] = useState(false);
 
   const deleteAttachmentFromStorage = async (url) => {
     if (!url) return;
@@ -135,6 +142,30 @@ function TicketDetails({
       setStatus(ticket.status); // Revert on error
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    setSavingDescription(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      const { error } = await supabase
+        .from("tickets")
+        .update({ description: editableDescription })
+        .eq("id", ticket.id);
+
+      if (error) throw error;
+      setSuccess(true);
+      setIsEditingDescription(false);
+      setTimeout(() => setSuccess(false), 2000);
+    } catch (error) {
+      console.error("Error updating description:", error);
+      setError("Failed to update description");
+      setEditableDescription(ticket.description); // Revert on error
+    } finally {
+      setSavingDescription(false);
     }
   };
 
@@ -480,44 +511,131 @@ function TicketDetails({
 
           {/* Description */}
           <div style={{ marginBottom: "1.5rem" }}>
-            <label
+            <div
               style={{
-                fontSize: "0.75rem",
-                textTransform: "uppercase",
-                color: "var(--text-muted)",
-                fontWeight: "600",
-                letterSpacing: "0.05em",
                 display: "flex",
                 alignItems: "center",
-                gap: "0.375rem",
+                justifyContent: "space-between",
                 marginBottom: "0.5rem",
               }}
             >
-              <FiFileText size={14} />
-              Description
-            </label>
-            <div
-              style={{
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                padding: "1rem",
-                maxHeight: "200px",
-                overflowY: "auto",
-              }}
-            >
-              <p
+              <label
                 style={{
-                  fontSize: "0.9375rem",
-                  color: "var(--text-secondary)",
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                  lineHeight: "1.6",
+                  fontSize: "0.75rem",
+                  textTransform: "uppercase",
+                  color: "var(--text-muted)",
+                  fontWeight: "600",
+                  letterSpacing: "0.05em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.375rem",
                 }}
               >
-                {ticket.description}
-              </p>
+                <FiFileText size={14} />
+                Description
+              </label>
+              {!readOnly && !isEditingDescription && (
+                <button
+                  className="btn btn-small btn-ghost"
+                  onClick={() => setIsEditingDescription(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.375rem",
+                    padding: "0.25rem 0.5rem",
+                  }}
+                  title="Edit description"
+                >
+                  <FiEdit2 size={14} />
+                  Edit
+                </button>
+              )}
             </div>
+            {isEditingDescription ? (
+              <div>
+                <textarea
+                  value={editableDescription}
+                  onChange={(e) => setEditableDescription(e.target.value)}
+                  style={{
+                    width: "100%",
+                    minHeight: "150px",
+                    padding: "1rem",
+                    border: "1px solid var(--primary)",
+                    borderRadius: "var(--radius-md)",
+                    background: "var(--bg-elevated)",
+                    fontSize: "0.9375rem",
+                    color: "var(--text-secondary)",
+                    lineHeight: "1.6",
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                  }}
+                  disabled={savingDescription}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    marginTop: "0.75rem",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <button
+                    className="btn btn-small btn-ghost"
+                    onClick={() => {
+                      setIsEditingDescription(false);
+                      setEditableDescription(ticket.description);
+                    }}
+                    disabled={savingDescription}
+                  >
+                    <FiX size={14} />
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-small btn-primary"
+                    onClick={handleSaveDescription}
+                    disabled={savingDescription}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.375rem",
+                    }}
+                  >
+                    {savingDescription ? (
+                      <div
+                        className="spinner"
+                        style={{ width: "14px", height: "14px" }}
+                      ></div>
+                    ) : (
+                      <FiSave size={14} />
+                    )}
+                    Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: "var(--bg-elevated)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "1rem",
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: "0.9375rem",
+                    color: "var(--text-secondary)",
+                    margin: 0,
+                    whiteSpace: "pre-wrap",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  {editableDescription}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Attachment Section */}
