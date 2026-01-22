@@ -830,6 +830,7 @@ function Preview() {
               ticket={selectedTicket}
               onClose={handleCloseDetails}
               authorName="Developer"
+              readOnly={true}
               allowStatusUpdate={false}
               allowAttachmentEdit={false}
             />
