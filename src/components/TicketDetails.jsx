@@ -32,6 +32,7 @@ function TicketDetails({
   authorName,
   allowStatusUpdate = true,
   allowAttachmentEdit = true,
+  allowRemarks = true,
 }) {
   const [status, setStatus] = useState(ticket.status);
   const [saving, setSaving] = useState(false);
@@ -818,7 +819,7 @@ function TicketDetails({
           {/* Remarks Section */}
           <RemarksSection
             ticketId={ticket.id}
-            readOnly={readOnly}
+            readOnly={readOnly && !allowRemarks}
             authorName={authorName}
           />
 

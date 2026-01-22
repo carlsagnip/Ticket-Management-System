@@ -833,6 +833,7 @@ function Preview() {
               readOnly={true}
               allowStatusUpdate={false}
               allowAttachmentEdit={false}
+              allowRemarks={true}
             />
           )}
 
