@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import TicketDetails from "./TicketDetails";
 import {
@@ -12,8 +12,9 @@ import {
   FiFileText,
   FiInbox,
   FiCalendar,
-  FiDownload,
+  FiExternalLink,
   FiArrowLeft,
+  FiChevronDown,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import SearchableSelect from "../components/SearchableSelect";
@@ -36,6 +37,21 @@ function Preview() {
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
+
+  // Animation tracking states
+  const [newTicketIds, setNewTicketIds] = useState(new Set());
+  const [prevStats, setPrevStats] = useState(null);
+  const [animatingStats, setAnimatingStats] = useState({});
+
+  // Ref to track current ticket IDs for animation detection
+  const ticketIdsRef = useRef(new Set());
+
+  // Update ref when tickets change
+  useEffect(() => {
+    ticketIdsRef.current = new Set(tickets.map((t) => t.id));
+  }, [tickets]);
 
   useEffect(() => {
     fetchTickets();
@@ -73,6 +89,19 @@ function Preview() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
+      // Detect new tickets for animation using ref (avoids stale closure)
+      if (!showLoading && data && ticketIdsRef.current.size > 0) {
+        const newIds = data
+          .filter((t) => !ticketIdsRef.current.has(t.id))
+          .map((t) => t.id);
+        if (newIds.length > 0) {
+          setNewTicketIds(new Set(newIds));
+          // Clear animation after 3 seconds
+          setTimeout(() => setNewTicketIds(new Set()), 3000);
+        }
+      }
+
       setTickets(data || []);
     } catch (error) {
       console.error("Error fetching tickets:", error);
@@ -113,6 +142,24 @@ function Preview() {
     resolved: tickets.filter((t) => t.status === "Resolved").length,
     closed: tickets.filter((t) => t.status === "Closed").length,
   };
+
+  // Animate stats when they increase
+  useEffect(() => {
+    if (prevStats) {
+      const changedStats = {};
+      Object.keys(stats).forEach((key) => {
+        // Only animate if the stat increased
+        if (stats[key] > prevStats[key]) {
+          changedStats[key] = true;
+        }
+      });
+      if (Object.keys(changedStats).length > 0) {
+        setAnimatingStats(changedStats);
+        setTimeout(() => setAnimatingStats({}), 1000);
+      }
+    }
+    setPrevStats(stats);
+  }, [stats.total, stats.open, stats.inProgress, stats.resolved, stats.closed]);
 
   // Apply filters
   let filteredTickets = tickets.filter((ticket) => {
@@ -398,7 +445,9 @@ function Preview() {
               flexShrink: 0,
             }}
           >
-            <div className="stat-card">
+            <div
+              className={`stat-card ${animatingStats.total ? "stat-glow-blue" : ""}`}
+            >
               <div className="stat-card-header">
                 <div className="stat-label">Total Tickets</div>
                 <div className="stat-icon" style={{ background: "#eff6ff" }}>
@@ -409,7 +458,9 @@ function Preview() {
                 {stats.total}
               </div>
             </div>
-            <div className="stat-card">
+            <div
+              className={`stat-card ${animatingStats.open ? "stat-glow-navy" : ""}`}
+            >
               <div className="stat-card-header">
                 <div className="stat-label">Open</div>
                 <div className="stat-icon" style={{ background: "#dbeafe" }}>
@@ -420,7 +471,9 @@ function Preview() {
                 {stats.open}
               </div>
             </div>
-            <div className="stat-card">
+            <div
+              className={`stat-card ${animatingStats.inProgress ? "stat-glow-orange" : ""}`}
+            >
               <div className="stat-card-header">
                 <div className="stat-label">In Progress</div>
                 <div className="stat-icon" style={{ background: "#fed7aa" }}>
@@ -431,7 +484,9 @@ function Preview() {
                 {stats.inProgress}
               </div>
             </div>
-            <div className="stat-card">
+            <div
+              className={`stat-card ${animatingStats.resolved ? "stat-glow-green" : ""}`}
+            >
               <div className="stat-card-header">
                 <div className="stat-label">Resolved</div>
                 <div className="stat-icon" style={{ background: "#d1fae5" }}>
@@ -444,50 +499,58 @@ function Preview() {
             </div>
           </div>
 
-          {/* Search - Fixed */}
-          <div
-            style={{
-              marginBottom: "1rem",
-              flexShrink: 0,
-              position: "relative",
-            }}
-          >
-            <FiSearch
-              style={{
-                position: "absolute",
-                left: "1rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--text-muted)",
-                width: "18px",
-                height: "18px",
-              }}
-            />
-            <input
-              type="text"
-              className="form-input"
-              placeholder="Search tickets..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: "2.75rem" }}
-            />
-          </div>
-
-          {/* Filters Row - All in one line */}
+          {/* Search and Filters Row - All in one line */}
           <div
             style={{
               display: "flex",
               gap: "0.75rem",
               flexWrap: "wrap",
               alignItems: "center",
-              justifyContent: "space-between",
               marginBottom: "1rem",
               flexShrink: 0,
             }}
           >
-            {/* Left side: Date and Status filters */}
+            {/* Search Field */}
             <div
-              style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
+              style={{
+                position: "relative",
+                flex: "1",
+                minWidth: "200px",
+              }}
+            >
+              <FiSearch
+                style={{
+                  position: "absolute",
+                  left: "1rem",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--text-muted)",
+                  width: "16px",
+                  height: "16px",
+                }}
+              />
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Search tickets..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  paddingLeft: "2.5rem",
+                  margin: 0,
+                  height: "38px",
+                }}
+              />
+            </div>
+
+            {/* All Filter Buttons - Grouped together */}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
             >
               {/* Date Filter Dropdown */}
               <div style={{ position: "relative" }}>
@@ -748,44 +811,219 @@ function Preview() {
                   />
                 )}
               </div>
-            </div>
 
-            {/* Right side: Dropdowns */}
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <SearchableSelect
-                options={[
-                  { id: "newest", name: "Newest First" },
-                  { id: "oldest", name: "Oldest First" },
-                ]}
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                name="sortBy"
-                placeholder="Sort By"
-                style={{ width: "170px", marginBottom: 0 }}
-                modal
-              />
-              <SearchableSelect
-                options={[{ id: "All", name: "All Offices" }, ...offices]}
-                value={officeFilter}
-                onChange={(e) => setOfficeFilter(e.target.value)}
-                name="officeFilter"
-                placeholder="All Offices"
-                style={{ width: "170px", marginBottom: 0 }}
-                modal
-                modalWidth="500px"
-              />
+              {/* Sort Dropdown */}
+              <div style={{ position: "relative" }}>
+                <button
+                  className="filter-pill"
+                  onClick={() => setShowSortDropdown(!showSortDropdown)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  {sortBy === "newest" ? "Newest" : "Oldest"}
+                  <FiChevronDown size={14} />
+                </button>
+
+                {/* Sort Dropdown Menu */}
+                {showSortDropdown && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      right: 0,
+                      marginTop: "0.5rem",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "var(--shadow-lg)",
+                      zIndex: 50,
+                      minWidth: "140px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {[
+                      { value: "newest", label: "Newest First" },
+                      { value: "oldest", label: "Oldest First" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value);
+                          setShowSortDropdown(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem 1rem",
+                          border: "none",
+                          background:
+                            sortBy === option.value
+                              ? "var(--primary)"
+                              : "transparent",
+                          color:
+                            sortBy === option.value
+                              ? "white"
+                              : "var(--text-primary)",
+                          textAlign: "left",
+                          cursor: "pointer",
+                          fontSize: "0.875rem",
+                          fontWeight: "500",
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (sortBy !== option.value) {
+                            e.target.style.background = "var(--bg-elevated)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (sortBy !== option.value) {
+                            e.target.style.background = "transparent";
+                          }
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Click outside to close sort dropdown */}
+                {showSortDropdown && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 40,
+                    }}
+                    onClick={() => setShowSortDropdown(false)}
+                  />
+                )}
+              </div>
+
+              {/* Office Filter Dropdown */}
+              <div
+                className="preview-office-filter"
+                style={{ position: "relative" }}
+              >
+                <button
+                  className={`filter-pill ${officeFilter !== "All" ? "active" : ""}`}
+                  onClick={() => setShowOfficeDropdown(!showOfficeDropdown)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    maxWidth: "150px",
+                  }}
+                >
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {officeFilter === "All"
+                      ? "All Offices"
+                      : offices.find((o) => o.id === officeFilter)?.name ||
+                        officeFilter}
+                  </span>
+                  <FiChevronDown size={14} style={{ flexShrink: 0 }} />
+                </button>
+
+                {/* Office Dropdown Menu */}
+                {showOfficeDropdown && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      right: 0,
+                      marginTop: "0.5rem",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-md)",
+                      boxShadow: "var(--shadow-lg)",
+                      zIndex: 50,
+                      minWidth: "200px",
+                      maxWidth: "300px",
+                      maxHeight: "300px",
+                      overflow: "auto",
+                    }}
+                  >
+                    {[{ id: "All", name: "All Offices" }, ...offices].map(
+                      (option) => (
+                        <button
+                          key={option.id}
+                          onClick={() => {
+                            setOfficeFilter(option.id);
+                            setShowOfficeDropdown(false);
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "0.75rem 1rem",
+                            border: "none",
+                            background:
+                              officeFilter === option.id
+                                ? "var(--primary)"
+                                : "transparent",
+                            color:
+                              officeFilter === option.id
+                                ? "white"
+                                : "var(--text-primary)",
+                            textAlign: "left",
+                            cursor: "pointer",
+                            fontSize: "0.875rem",
+                            fontWeight: "500",
+                            transition: "all 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (officeFilter !== option.id) {
+                              e.target.style.background = "var(--bg-elevated)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (officeFilter !== option.id) {
+                              e.target.style.background = "transparent";
+                            }
+                          }}
+                        >
+                          {option.name}
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
+
+                {/* Click outside to close office dropdown */}
+                {showOfficeDropdown && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 40,
+                    }}
+                    onClick={() => setShowOfficeDropdown(false)}
+                  />
+                )}
+              </div>
+
+              {/* Export Button - Compact */}
               <button
-                className="btn btn-success"
+                className="filter-pill active"
                 onClick={exportToPDF}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "0.5rem",
-                  whiteSpace: "nowrap",
+                  background: "var(--success)",
+                  borderColor: "var(--success)",
+                  color: "white",
                 }}
+                title={`Export PDF (${filteredTickets.length})`}
               >
-                <FiDownload size={18} />
-                Export PDF ({filteredTickets.length})
+                <FiExternalLink size={16} />
+                <span>{filteredTickets.length}</span>
               </button>
             </div>
           </div>
@@ -859,6 +1097,7 @@ function Preview() {
               flex: 1,
               overflow: "auto",
               minHeight: 0,
+              maxHeight: "calc(100vh - 350px)",
               backgroundColor: "white",
               borderRadius: "1rem",
             }}
@@ -889,67 +1128,114 @@ function Preview() {
                 </p>
               </div>
             ) : (
-              <div
-                className="table-container"
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  height: "100%",
-                }}
-              >
-                <table className="table">
-                  <thead
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 10,
-                    }}
-                  >
-                    <tr>
-                      <th>Ticket ID</th>
-                      <th>Name</th>
-                      <th>Office</th>
-                      <th>Category</th>
-                      <th>Priority</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTickets.map((ticket) => (
-                      <tr
-                        key={ticket.id}
-                        onClick={() => handleTicketClick(ticket)}
-                      >
-                        <td>
-                          <span
+              <>
+                <div
+                  className="table-container preview-table-desktop"
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    height: "100%",
+                    overflowX: "auto",
+                    overflowY: "auto",
+                  }}
+                >
+                  <table className="table">
+                    <thead
+                      style={{
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 10,
+                      }}
+                    >
+                      <tr>
+                        <th>Ticket ID</th>
+                        <th>Name</th>
+                        <th>Office</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredTickets.map((ticket) => (
+                        <tr
+                          key={ticket.id}
+                          className={
+                            newTicketIds.has(ticket.id) ? "ticket-new" : ""
+                          }
+                          onClick={() => handleTicketClick(ticket)}
+                        >
+                          <td>
+                            <span
+                              style={{
+                                fontFamily: "monospace",
+                                fontWeight: "600",
+                                color: "var(--primary)",
+                              }}
+                            >
+                              {ticket.ticket_id}
+                            </span>
+                          </td>
+                          <td>{ticket.full_name}</td>
+                          <td>{ticket.offices?.name || "N/A"}</td>
+                          <td>{ticket.categories?.name || "N/A"}</td>
+                          <td>{getPriorityBadge(ticket.priority)}</td>
+                          <td>{getStatusBadge(ticket.status)}</td>
+                          <td
                             style={{
-                              fontFamily: "monospace",
-                              fontWeight: "600",
-                              color: "var(--primary)",
+                              color: "var(--text-muted)",
+                              fontSize: "0.875rem",
                             }}
                           >
-                            {ticket.ticket_id}
-                          </span>
-                        </td>
-                        <td>{ticket.full_name}</td>
-                        <td>{ticket.offices?.name || "N/A"}</td>
-                        <td>{ticket.categories?.name || "N/A"}</td>
-                        <td>{getPriorityBadge(ticket.priority)}</td>
-                        <td>{getStatusBadge(ticket.status)}</td>
-                        <td
-                          style={{
-                            color: "var(--text-muted)",
-                            fontSize: "0.875rem",
-                          }}
-                        >
-                          {formatDate(ticket.created_at)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                            {formatDate(ticket.created_at)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="preview-mobile-cards">
+                  {filteredTickets.map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      className={`preview-ticket-card ${newTicketIds.has(ticket.id) ? "ticket-new" : ""}`}
+                      onClick={() => handleTicketClick(ticket)}
+                    >
+                      <div className="preview-card-top">
+                        <span className="preview-card-name">
+                          {ticket.full_name}
+                        </span>
+                        <span className="preview-card-status">
+                          {getStatusBadge(ticket.status)}
+                        </span>
+                      </div>
+                      <div className="preview-card-bottom">
+                        <span className="preview-card-id">
+                          {ticket.ticket_id}
+                        </span>
+                        <span className="preview-card-divider">•</span>
+                        <span className="preview-card-office">
+                          {ticket.offices?.name || "N/A"}
+                        </span>
+                        <span className="preview-card-divider">•</span>
+                        <span className="preview-card-category">
+                          {ticket.categories?.name || "N/A"}
+                        </span>
+                        <span className="preview-card-divider">•</span>
+                        <span className="preview-card-priority">
+                          {getPriorityBadge(ticket.priority)}
+                        </span>
+                      </div>
+                      <div className="preview-card-date">
+                        {formatDate(ticket.created_at)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
