@@ -760,3 +760,81 @@ p {
     padding: 1.25rem;
   }
 }
+
+/* =====================================================
+   PREVIEW PAGE - STAT CARDS MOBILE RESPONSIVE
+   ===================================================== */
+
+/* Tablet view - 2 columns */
+@media (max-width: 1024px) {
+  .preview-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Mobile view - Compact horizontal stat cards */
+@media (max-width: 768px) {
+  .preview-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .preview-stats-grid .stat-card {
+    padding: 0.75rem 1rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  
+  .preview-stats-grid .stat-card-header {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0 !important;
+  }
+  
+  .preview-stats-grid .stat-label {
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .preview-stats-grid .stat-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .preview-stats-grid .stat-icon svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  
+  .preview-stats-grid .stat-value {
+    font-size: 1.25rem !important;
+    margin: 0 !important;
+  }
+  
+  /* Compact filter row on mobile */
+  .preview-filters-row {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .preview-filters-left {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .preview-filters-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .preview-filters-right > * {
+    flex: 1;
+    min-width: 120px;
+  }
+}
