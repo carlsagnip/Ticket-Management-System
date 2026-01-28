@@ -428,6 +428,34 @@ function TicketDetails({
                 }}
               >
                 <FiAlertCircle size={14} />
+                Error Type
+              </label>
+              <p
+                style={{
+                  fontSize: "1rem",
+                  color: "var(--text-primary)",
+                  margin: "0.5rem 0 0",
+                  fontWeight: "500",
+                }}
+              >
+                {ticket.error_type || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <label
+                style={{
+                  fontSize: "0.75rem",
+                  textTransform: "uppercase",
+                  color: "var(--text-muted)",
+                  fontWeight: "600",
+                  letterSpacing: "0.05em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.375rem",
+                }}
+              >
+                <FiAlertCircle size={14} />
                 Priority
               </label>
               <p

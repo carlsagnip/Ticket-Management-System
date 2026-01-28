@@ -25,6 +25,7 @@ function TicketForm() {
     officeId: "",
     categoryId: "",
     priority: "Medium",
+    errorType: "",
     subject: "",
     description: "",
   });
@@ -101,6 +102,10 @@ function TicketForm() {
       newErrors.categoryId = "Please select a category";
     }
 
+    if (!formData.errorType) {
+      newErrors.errorType = "Please select an error type";
+    }
+
     if (!formData.subject.trim()) {
       newErrors.subject = "Subject is required";
     }
@@ -152,6 +157,7 @@ function TicketForm() {
               office_id: formData.officeId,
               category_id: formData.categoryId,
               priority: formData.priority,
+              error_type: formData.errorType,
               subject: formData.subject,
               description: formData.description,
               status: "Open", // Default status
@@ -188,6 +194,7 @@ function TicketForm() {
           officeId: "",
           categoryId: "",
           priority: "Medium",
+          errorType: "",
           subject: "",
           description: "",
         });
@@ -413,33 +420,75 @@ function TicketForm() {
                 </div>
               </div>
 
-              {/* Priority */}
-              <div className="form-group">
-                <label
-                  className="form-label"
-                  htmlFor="priority"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    textTransform: "none",
-                  }}
-                >
-                  <FiAlertCircle size={16} />
-                  Priority
-                  <span style={{ color: "var(--danger)" }}>*</span>
-                </label>
-                <select
-                  id="priority"
-                  name="priority"
-                  className="form-select"
-                  value={formData.priority}
-                  onChange={handleChange}
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
+              {/* Priority & Error Type Row */}
+              <div className="form-grid-row">
+                <div className="form-group">
+                  <label
+                    className="form-label"
+                    htmlFor="priority"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      textTransform: "none",
+                    }}
+                  >
+                    <FiAlertCircle size={16} />
+                    Priority
+                    <span style={{ color: "var(--danger)" }}>*</span>
+                  </label>
+                  <select
+                    id="priority"
+                    name="priority"
+                    className="form-select"
+                    value={formData.priority}
+                    onChange={handleChange}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+
+                {/* Error Type */}
+                <div className="form-group">
+                  <label
+                    className="form-label"
+                    htmlFor="errorType"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      textTransform: "none",
+                    }}
+                  >
+                    <FiAlertCircle size={16} />
+                    Error Type
+                    <span style={{ color: "var(--danger)" }}>*</span>
+                  </label>
+                  <select
+                    id="errorType"
+                    name="errorType"
+                    className="form-select"
+                    value={formData.errorType}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select Error Type</option>
+                    <option value="User Error">User Error</option>
+                    <option value="System Error">System Error</option>
+                  </select>
+                  {errors.errorType && (
+                    <p
+                      style={{
+                        color: "var(--danger)",
+                        fontSize: "0.875rem",
+                        marginTop: "0.25rem",
+                      }}
+                    >
+                      {errors.errorType}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Subject */}

@@ -1152,6 +1152,7 @@ function Preview() {
                         <th>Name</th>
                         <th>Office</th>
                         <th>Category</th>
+                        <th>Error Type</th>
                         <th>Priority</th>
                         <th>Status</th>
                         <th>Date</th>
@@ -1180,6 +1181,18 @@ function Preview() {
                           <td>{ticket.full_name}</td>
                           <td>{ticket.offices?.name || "N/A"}</td>
                           <td>{ticket.categories?.name || "N/A"}</td>
+                          <td>
+                            <span
+                              style={{
+                                fontSize: "0.85rem",
+                                color: ticket.error_type
+                                  ? "var(--text-primary)"
+                                  : "var(--text-muted)",
+                              }}
+                            >
+                              {ticket.error_type || "-"}
+                            </span>
+                          </td>
                           <td>{getPriorityBadge(ticket.priority)}</td>
                           <td>{getStatusBadge(ticket.status)}</td>
                           <td
@@ -1224,6 +1237,14 @@ function Preview() {
                         <span className="preview-card-category">
                           {ticket.categories?.name || "N/A"}
                         </span>
+                        {ticket.error_type && (
+                          <>
+                            <span className="preview-card-divider">•</span>
+                            <span className="preview-card-category">
+                              {ticket.error_type}
+                            </span>
+                          </>
+                        )}
                         <span className="preview-card-divider">•</span>
                         <span className="preview-card-priority">
                           {getPriorityBadge(ticket.priority)}

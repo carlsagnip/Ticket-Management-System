@@ -748,6 +748,7 @@ function TicketList() {
                   <th>Name</th>
                   <th>Office</th>
                   <th>Category</th>
+                  <th>Error Type</th>
                   <th>Priority</th>
                   <th>Status</th>
                   <th>Date</th>
@@ -770,6 +771,18 @@ function TicketList() {
                     <td>{ticket.full_name}</td>
                     <td>{ticket.offices?.name || "N/A"}</td>
                     <td>{ticket.categories?.name || "N/A"}</td>
+                    <td>
+                      <span
+                        style={{
+                          fontSize: "0.85rem",
+                          color: ticket.error_type
+                            ? "var(--text-primary)"
+                            : "var(--text-muted)",
+                        }}
+                      >
+                        {ticket.error_type || "-"}
+                      </span>
+                    </td>
                     <td>{getPriorityBadge(ticket.priority)}</td>
                     <td>{getStatusBadge(ticket.status)}</td>
                     <td
