@@ -264,6 +264,7 @@ function TicketDetails({
 
           {/* Info Grid */}
           <div
+            className="ticket-details-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",

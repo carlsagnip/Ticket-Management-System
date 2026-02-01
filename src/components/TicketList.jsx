@@ -15,6 +15,7 @@ import {
   FiInbox,
   FiCalendar,
   FiDownload,
+  FiChevronDown,
 } from "react-icons/fi";
 import SearchableSelect from "../components/SearchableSelect";
 
@@ -33,6 +34,10 @@ function TicketList() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
 
   useEffect(() => {
     fetchTickets();
@@ -366,8 +371,9 @@ function TicketList() {
         minHeight: 0,
       }}
     >
-      {/* Statistics Cards - Fixed */}
+      {/* Statistics Cards - Responsive grid */}
       <div
+        className="preview-stats-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
@@ -420,278 +426,600 @@ function TicketList() {
             {stats.resolved}
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <div className="stat-label">Closed</div>
-            <div className="stat-icon" style={{ background: "#e2e8f0" }}>
-              <FiXCircle style={{ color: "#475569" }} />
-            </div>
-          </div>
-          <div className="stat-value" style={{ color: "#475569" }}>
-            {stats.closed}
-          </div>
-        </div>
       </div>
 
-      {/* Search - Fixed */}
-      <div
-        style={{ marginBottom: "1rem", flexShrink: 0, position: "relative" }}
-      >
-        <FiSearch
-          style={{
-            position: "absolute",
-            left: "1rem",
-            top: "50%",
-            transform: "translateY(-50%)",
-            color: "var(--text-muted)",
-            width: "18px",
-            height: "18px",
-          }}
-        />
-        <input
-          type="text"
-          className="form-input"
-          placeholder="Search tickets..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ paddingLeft: "2.75rem" }}
-        />
-      </div>
-
-      {/* Date Filter - Fixed */}
-      <div style={{ marginBottom: "1rem", flexShrink: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          <button
-            className={`filter-pill ${dateFilter === "All" ? "active" : ""}`}
-            onClick={() => {
-              setDateFilter("All");
-              setShowCustomDatePicker(false);
-            }}
-          >
-            <FiCalendar size={16} />
-            All Time
-          </button>
-          <button
-            className={`filter-pill ${dateFilter === "Today" ? "active" : ""}`}
-            onClick={() => {
-              setDateFilter("Today");
-              setShowCustomDatePicker(false);
-            }}
-          >
-            <FiCalendar size={16} />
-            Today
-          </button>
-          <button
-            className={`filter-pill ${dateFilter === "1 Week" ? "active" : ""}`}
-            onClick={() => {
-              setDateFilter("1 Week");
-              setShowCustomDatePicker(false);
-            }}
-          >
-            <FiCalendar size={16} />1 Week
-          </button>
-          <button
-            className={`filter-pill ${dateFilter === "1 Month" ? "active" : ""}`}
-            onClick={() => {
-              setDateFilter("1 Month");
-              setShowCustomDatePicker(false);
-            }}
-          >
-            <FiCalendar size={16} />1 Month
-          </button>
-          <button
-            className={`filter-pill ${dateFilter === "3 Months" ? "active" : ""}`}
-            onClick={() => {
-              setDateFilter("3 Months");
-              setShowCustomDatePicker(false);
-            }}
-          >
-            <FiCalendar size={16} />3 Months
-          </button>
-          <button
-            className={`filter-pill ${dateFilter === "1 Year" ? "active" : ""}`}
-            onClick={() => {
-              setDateFilter("1 Year");
-              setShowCustomDatePicker(false);
-            }}
-          >
-            <FiCalendar size={16} />1 Year
-          </button>
-          <button
-            className={`filter-pill ${dateFilter === "Custom" ? "active" : ""}`}
-            onClick={() => {
-              setDateFilter("Custom");
-              setShowCustomDatePicker(!showCustomDatePicker);
-            }}
-          >
-            <FiCalendar size={16} />
-            Custom Range
-          </button>
-        </div>
-
-        {/* Custom Date Picker */}
-        {showCustomDatePicker && dateFilter === "Custom" && (
-          <div
-            style={{
-              marginTop: "0.75rem",
-              padding: "1rem",
-              background: "var(--bg-card)",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-md)",
-              display: "flex",
-              gap: "0.75rem",
-              alignItems: "flex-end",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ flex: "1", minWidth: "150px" }}>
-              <label
-                htmlFor="startDate"
-                style={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: "600",
-                  color: "var(--text-secondary)",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                Start Date
-              </label>
-              <input
-                id="startDate"
-                type="date"
-                className="form-input"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                style={{ margin: 0 }}
-              />
-            </div>
-            <div style={{ flex: "1", minWidth: "150px" }}>
-              <label
-                htmlFor="endDate"
-                style={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: "600",
-                  color: "var(--text-secondary)",
-                  marginBottom: "0.25rem",
-                }}
-              >
-                End Date
-              </label>
-              <input
-                id="endDate"
-                type="date"
-                className="form-input"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                min={customStartDate}
-                style={{ margin: 0 }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Filter Pills and Dropdowns - Fixed */}
+      {/* Search and Filters Row - All in one line */}
       <div
         style={{
           display: "flex",
           gap: "0.75rem",
           flexWrap: "wrap",
           alignItems: "center",
-          justifyContent: "space-between",
           marginBottom: "1rem",
           flexShrink: 0,
         }}
       >
-        {/* Status Filter Pills */}
+        {/* Search Field */}
         <div
-          style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", flex: 1 }}
+          style={{
+            position: "relative",
+            flex: "1",
+            minWidth: "200px",
+          }}
         >
-          <button
-            className={`filter-pill ${statusFilter === "All" ? "active" : ""}`}
-            onClick={() => setStatusFilter("All")}
-          >
-            <FiFilter size={16} />
-            All ({stats.total})
-          </button>
-          <button
-            className={`filter-pill ${statusFilter === "Open" ? "active" : ""}`}
-            onClick={() => setStatusFilter("Open")}
-          >
-            <FiFileText size={16} />
-            Open ({stats.open})
-          </button>
-          <button
-            className={`filter-pill ${statusFilter === "In Progress" ? "active" : ""}`}
-            onClick={() => setStatusFilter("In Progress")}
-          >
-            <FiClock size={16} />
-            In Progress ({stats.inProgress})
-          </button>
-          <button
-            className={`filter-pill ${statusFilter === "Resolved" ? "active" : ""}`}
-            onClick={() => setStatusFilter("Resolved")}
-          >
-            <FiCheckCircle size={16} />
-            Resolved ({stats.resolved})
-          </button>
-          <button
-            className={`filter-pill ${statusFilter === "Closed" ? "active" : ""}`}
-            onClick={() => setStatusFilter("Closed")}
-          >
-            <FiXCircle size={16} />
-            Closed ({stats.closed})
-          </button>
+          <FiSearch
+            style={{
+              position: "absolute",
+              left: "1rem",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--text-muted)",
+              width: "16px",
+              height: "16px",
+            }}
+          />
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Search tickets..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              paddingLeft: "2.5rem",
+              margin: 0,
+              height: "38px",
+            }}
+          />
         </div>
 
-        {/* Dropdowns */}
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <SearchableSelect
-            options={[
-              { id: "newest", name: "Newest First" },
-              { id: "oldest", name: "Oldest First" },
-            ]}
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            name="sortBy"
-            placeholder="Sort By"
-            style={{ width: "170px", marginBottom: 0 }}
-            modal
-          />
-          <SearchableSelect
-            options={[{ id: "All", name: "All Offices" }, ...offices]}
-            value={officeFilter}
-            onChange={(e) => setOfficeFilter(e.target.value)}
-            name="officeFilter"
-            placeholder="All Offices"
-            style={{ width: "170px", marginBottom: 0 }}
-            modal
-            modalWidth="500px"
-          />
+        {/* All Filter Buttons - Grouped together */}
+        <div
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Date Filter Dropdown */}
+          <div style={{ position: "relative" }}>
+            <button
+              className={`filter-pill ${dateFilter !== "All" ? "active" : ""}`}
+              onClick={() => setShowDateDropdown(!showDateDropdown)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              <FiCalendar size={16} />
+              {dateFilter === "All"
+                ? "All Time"
+                : dateFilter === "Custom"
+                  ? "Custom Range"
+                  : dateFilter}
+            </button>
+
+            {/* Date Dropdown Menu */}
+            {showDateDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  marginTop: "0.5rem",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-lg)",
+                  zIndex: 50,
+                  minWidth: "180px",
+                  overflow: "hidden",
+                }}
+              >
+                {[
+                  { value: "All", label: "All Time" },
+                  { value: "Today", label: "Today" },
+                  { value: "1 Week", label: "1 Week" },
+                  { value: "1 Month", label: "1 Month" },
+                  { value: "3 Months", label: "3 Months" },
+                  { value: "1 Year", label: "1 Year" },
+                  { value: "Custom", label: "Custom Range" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setDateFilter(option.value);
+                      if (option.value === "Custom") {
+                        setShowCustomDatePicker(true);
+                      } else {
+                        setShowCustomDatePicker(false);
+                      }
+                      setShowDateDropdown(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      border: "none",
+                      background:
+                        dateFilter === option.value
+                          ? "var(--primary)"
+                          : "transparent",
+                      color:
+                        dateFilter === option.value
+                          ? "white"
+                          : "var(--text-primary)",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      fontSize: "0.875rem",
+                      fontWeight: "500",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (dateFilter !== option.value) {
+                        e.target.style.background = "var(--bg-elevated)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (dateFilter !== option.value) {
+                        e.target.style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <FiCalendar size={14} />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Click outside to close date dropdown */}
+            {showDateDropdown && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 40,
+                }}
+                onClick={() => setShowDateDropdown(false)}
+              />
+            )}
+          </div>
+
+          {/* Status Filter Dropdown */}
+          <div style={{ position: "relative" }}>
+            <button
+              className={`filter-pill ${statusFilter !== "All" ? "active" : ""}`}
+              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              <FiFilter size={16} />
+              {statusFilter === "All"
+                ? `All (${stats.total})`
+                : statusFilter === "Open"
+                  ? `Open (${stats.open})`
+                  : statusFilter === "In Progress"
+                    ? `In Progress (${stats.inProgress})`
+                    : statusFilter === "Resolved"
+                      ? `Resolved (${stats.resolved})`
+                      : `Closed (${stats.closed})`}
+            </button>
+
+            {/* Status Dropdown Menu */}
+            {showStatusDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  marginTop: "0.5rem",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-lg)",
+                  zIndex: 50,
+                  minWidth: "200px",
+                  overflow: "hidden",
+                }}
+              >
+                {[
+                  {
+                    value: "All",
+                    label: "All",
+                    count: stats.total,
+                    icon: <FiFilter size={14} />,
+                  },
+                  {
+                    value: "Open",
+                    label: "Open",
+                    count: stats.open,
+                    icon: <FiFileText size={14} />,
+                  },
+                  {
+                    value: "In Progress",
+                    label: "In Progress",
+                    count: stats.inProgress,
+                    icon: <FiClock size={14} />,
+                  },
+                  {
+                    value: "Resolved",
+                    label: "Resolved",
+                    count: stats.resolved,
+                    icon: <FiCheckCircle size={14} />,
+                  },
+                  {
+                    value: "Closed",
+                    label: "Closed",
+                    count: stats.closed,
+                    icon: <FiXCircle size={14} />,
+                  },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setStatusFilter(option.value);
+                      setShowStatusDropdown(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      border: "none",
+                      background:
+                        statusFilter === option.value
+                          ? "var(--primary)"
+                          : "transparent",
+                      color:
+                        statusFilter === option.value
+                          ? "white"
+                          : "var(--text-primary)",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "0.5rem",
+                      fontSize: "0.875rem",
+                      fontWeight: "500",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (statusFilter !== option.value) {
+                        e.target.style.background = "var(--bg-elevated)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (statusFilter !== option.value) {
+                        e.target.style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      {option.icon}
+                      {option.label}
+                    </span>
+                    <span
+                      style={{
+                        background:
+                          statusFilter === option.value
+                            ? "rgba(255,255,255,0.2)"
+                            : "var(--bg-elevated)",
+                        padding: "0.125rem 0.5rem",
+                        borderRadius: "9999px",
+                        fontSize: "0.75rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {option.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Click outside to close status dropdown */}
+            {showStatusDropdown && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 40,
+                }}
+                onClick={() => setShowStatusDropdown(false)}
+              />
+            )}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div style={{ position: "relative" }}>
+            <button
+              className="filter-pill"
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+              }}
+            >
+              {sortBy === "newest" ? "Newest" : "Oldest"}
+              <FiChevronDown size={14} />
+            </button>
+
+            {/* Sort Dropdown Menu */}
+            {showSortDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  marginTop: "0.5rem",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-lg)",
+                  zIndex: 50,
+                  minWidth: "140px",
+                  overflow: "hidden",
+                }}
+              >
+                {[
+                  { value: "newest", label: "Newest First" },
+                  { value: "oldest", label: "Oldest First" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setSortBy(option.value);
+                      setShowSortDropdown(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem 1rem",
+                      border: "none",
+                      background:
+                        sortBy === option.value
+                          ? "var(--primary)"
+                          : "transparent",
+                      color:
+                        sortBy === option.value
+                          ? "white"
+                          : "var(--text-primary)",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      fontSize: "0.875rem",
+                      fontWeight: "500",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (sortBy !== option.value) {
+                        e.target.style.background = "var(--bg-elevated)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (sortBy !== option.value) {
+                        e.target.style.background = "transparent";
+                      }
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Click outside to close sort dropdown */}
+            {showSortDropdown && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 40,
+                }}
+                onClick={() => setShowSortDropdown(false)}
+              />
+            )}
+          </div>
+
+          {/* Office Filter Dropdown */}
+          <div
+            className="preview-office-filter"
+            style={{ position: "relative" }}
+          >
+            <button
+              className={`filter-pill ${officeFilter !== "All" ? "active" : ""}`}
+              onClick={() => setShowOfficeDropdown(!showOfficeDropdown)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                maxWidth: "150px",
+              }}
+            >
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {officeFilter === "All"
+                  ? "All Offices"
+                  : offices.find((o) => o.id === officeFilter)?.name ||
+                    officeFilter}
+              </span>
+              <FiChevronDown size={14} style={{ flexShrink: 0 }} />
+            </button>
+
+            {/* Office Dropdown Menu */}
+            {showOfficeDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  marginTop: "0.5rem",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "var(--shadow-lg)",
+                  zIndex: 50,
+                  minWidth: "200px",
+                  maxWidth: "300px",
+                  maxHeight: "300px",
+                  overflow: "auto",
+                }}
+              >
+                {[{ id: "All", name: "All Offices" }, ...offices].map(
+                  (option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        setOfficeFilter(option.id);
+                        setShowOfficeDropdown(false);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem 1rem",
+                        border: "none",
+                        background:
+                          officeFilter === option.id
+                            ? "var(--primary)"
+                            : "transparent",
+                        color:
+                          officeFilter === option.id
+                            ? "white"
+                            : "var(--text-primary)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        fontSize: "0.875rem",
+                        fontWeight: "500",
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (officeFilter !== option.id) {
+                          e.target.style.background = "var(--bg-elevated)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (officeFilter !== option.id) {
+                          e.target.style.background = "transparent";
+                        }
+                      }}
+                    >
+                      {option.name}
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
+
+            {/* Click outside to close office dropdown */}
+            {showOfficeDropdown && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 40,
+                }}
+                onClick={() => setShowOfficeDropdown(false)}
+              />
+            )}
+          </div>
+
+          {/* Export Button - Compact */}
           <button
-            className="btn btn-success"
+            className="filter-pill active"
             onClick={exportToPDF}
             style={{
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
-              whiteSpace: "nowrap",
+              background: "var(--success)",
+              borderColor: "var(--success)",
+              color: "white",
             }}
+            title={`Export PDF (${filteredTickets.length})`}
           >
-            <FiDownload size={18} />
-            Export PDF ({filteredTickets.length})
+            <FiDownload size={16} />
+            <span>{filteredTickets.length}</span>
           </button>
         </div>
       </div>
+
+      {/* Custom Date Picker - Shows when Custom Range is selected */}
+      {showCustomDatePicker && dateFilter === "Custom" && (
+        <div
+          style={{
+            marginBottom: "1rem",
+            padding: "1rem",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            display: "flex",
+            gap: "0.75rem",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: "1", minWidth: "150px" }}>
+            <label
+              htmlFor="startDate"
+              style={{
+                display: "block",
+                fontSize: "0.875rem",
+                fontWeight: "600",
+                color: "var(--text-secondary)",
+                marginBottom: "0.25rem",
+              }}
+            >
+              Start Date
+            </label>
+            <input
+              id="startDate"
+              type="date"
+              className="form-input"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              style={{ margin: 0 }}
+            />
+          </div>
+          <div style={{ flex: "1", minWidth: "150px" }}>
+            <label
+              htmlFor="endDate"
+              style={{
+                display: "block",
+                fontSize: "0.875rem",
+                fontWeight: "600",
+                color: "var(--text-secondary)",
+                marginBottom: "0.25rem",
+              }}
+            >
+              End Date
+            </label>
+            <input
+              id="endDate"
+              type="date"
+              className="form-input"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              min={customStartDate}
+              style={{ margin: 0 }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Scrollable Tickets Table Container */}
       <div
@@ -727,77 +1055,129 @@ function TicketList() {
             </p>
           </div>
         ) : (
-          <div
-            className="table-container"
-            style={{
-              border: "none",
-              background: "transparent",
-              height: "100%",
-            }}
-          >
-            <table className="table">
-              <thead
-                style={{
-                  position: "sticky",
-                  top: 0,
-                  zIndex: 10,
-                }}
-              >
-                <tr>
-                  <th>Ticket ID</th>
-                  <th>Name</th>
-                  <th>Office</th>
-                  <th>Category</th>
-                  <th>Error Type</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTickets.map((ticket) => (
-                  <tr key={ticket.id} onClick={() => handleTicketClick(ticket)}>
-                    <td>
-                      <span
-                        style={{
-                          fontFamily: "monospace",
-                          fontWeight: "600",
-                          color: "var(--primary)",
-                        }}
-                      >
-                        {ticket.ticket_id}
-                      </span>
-                    </td>
-                    <td>{ticket.full_name}</td>
-                    <td>{ticket.offices?.name || "N/A"}</td>
-                    <td>{ticket.categories?.name || "N/A"}</td>
-                    <td>
-                      <span
-                        style={{
-                          fontSize: "0.85rem",
-                          color: ticket.error_type
-                            ? "var(--text-primary)"
-                            : "var(--text-muted)",
-                        }}
-                      >
-                        {ticket.error_type || "-"}
-                      </span>
-                    </td>
-                    <td>{getPriorityBadge(ticket.priority)}</td>
-                    <td>{getStatusBadge(ticket.status)}</td>
-                    <td
-                      style={{
-                        color: "var(--text-muted)",
-                        fontSize: "0.875rem",
-                      }}
-                    >
-                      {formatDate(ticket.created_at)}
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div
+              className="table-container preview-table-desktop"
+              style={{
+                border: "none",
+                background: "transparent",
+                height: "100%",
+              }}
+            >
+              <table className="table">
+                <thead
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 10,
+                  }}
+                >
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Name</th>
+                    <th>Office</th>
+                    <th>Category</th>
+                    <th>Error Type</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredTickets.map((ticket) => (
+                    <tr
+                      key={ticket.id}
+                      onClick={() => handleTicketClick(ticket)}
+                    >
+                      <td>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontWeight: "600",
+                            color: "var(--primary)",
+                          }}
+                        >
+                          {ticket.ticket_id}
+                        </span>
+                      </td>
+                      <td>{ticket.full_name}</td>
+                      <td>{ticket.offices?.name || "N/A"}</td>
+                      <td>{ticket.categories?.name || "N/A"}</td>
+                      <td>
+                        <span
+                          style={{
+                            fontSize: "0.85rem",
+                            color: ticket.error_type
+                              ? "var(--text-primary)"
+                              : "var(--text-muted)",
+                          }}
+                        >
+                          {ticket.error_type || "-"}
+                        </span>
+                      </td>
+                      <td>{getPriorityBadge(ticket.priority)}</td>
+                      <td>{getStatusBadge(ticket.status)}</td>
+                      <td
+                        style={{
+                          color: "var(--text-muted)",
+                          fontSize: "0.875rem",
+                        }}
+                      >
+                        {formatDate(ticket.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="preview-mobile-cards">
+              {filteredTickets.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="preview-ticket-card"
+                  onClick={() => handleTicketClick(ticket)}
+                >
+                  <div className="preview-card-top">
+                    <span className="preview-card-name">
+                      {ticket.full_name}
+                    </span>
+                    <span className="preview-card-status">
+                      {getStatusBadge(ticket.status)}
+                    </span>
+                  </div>
+                  <div className="preview-card-bottom">
+                    <span className="preview-card-id">{ticket.ticket_id}</span>
+                    <span className="preview-card-divider">•</span>
+                    <span className="preview-card-office">
+                      {ticket.offices?.name || "N/A"}
+                    </span>
+                    <span className="preview-card-divider">•</span>
+                    <span className="preview-card-category">
+                      {ticket.categories?.name || "N/A"}
+                    </span>
+                    {ticket.error_type && (
+                      <>
+                        <span className="preview-card-divider">•</span>
+                        <span className="preview-card-category">
+                          {ticket.error_type}
+                        </span>
+                      </>
+                    )}
+                    <span className="preview-card-divider">•</span>
+                    <span className="preview-card-priority">
+                      {getPriorityBadge(ticket.priority)}
+                    </span>
+                  </div>
+                  <div className="preview-card-date">
+                    {formatDate(ticket.created_at)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
