@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import TicketList from "../components/TicketList";
 import ManageOffices from "../components/ManageOffices";
 import ManageCategories from "../components/ManageCategories";
+import RepairBorrowed from "../components/RepairBorrowed";
 import {
   FiLogOut,
   FiFileText,
@@ -12,6 +13,7 @@ import {
   FiGrid,
   FiMenu,
   FiX,
+  FiTool,
 } from "react-icons/fi";
 
 function AdminDashboard() {
@@ -152,6 +154,11 @@ function AdminDashboard() {
                     id: "categories",
                     label: "Categories",
                     icon: <FiTag size={16} />,
+                  },
+                  {
+                    id: "repairBorrowed",
+                    label: "Repair/Borrowed",
+                    icon: <FiTool size={16} />,
                   },
                 ].map((item) => (
                   <button
@@ -335,6 +342,35 @@ function AdminDashboard() {
               <FiTag size={16} />
               <span className="nav-tab-text">Categories</span>
             </button>
+            <button
+              className={`nav-tab ${activeTab === "repairBorrowed" ? "active" : ""}`}
+              onClick={() => setActiveTab("repairBorrowed")}
+              style={{
+                background:
+                  activeTab === "repairBorrowed" ? "var(--primary)" : "transparent",
+                color:
+                  activeTab === "repairBorrowed"
+                    ? "white"
+                    : "var(--text-secondary)",
+                border: "1px solid",
+                borderColor:
+                  activeTab === "repairBorrowed"
+                    ? "var(--primary)"
+                    : "var(--border)",
+                padding: "0.5rem 0.875rem",
+                borderRadius: "var(--radius-md)",
+                cursor: "pointer",
+                fontSize: "0.8125rem",
+                fontWeight: "600",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.375rem",
+              }}
+            >
+              <FiTool size={16} />
+              <span className="nav-tab-text">Repair/Borrowed</span>
+            </button>
           </div>
 
           {/* Right: Logout Button */}
@@ -387,6 +423,7 @@ function AdminDashboard() {
           {activeTab === "tickets" && <TicketList />}
           {activeTab === "offices" && <ManageOffices />}
           {activeTab === "categories" && <ManageCategories />}
+          {activeTab === "repairBorrowed" && <RepairBorrowed />}
         </div>
       </div>
     </div>

@@ -16,17 +16,20 @@ import {
   FiCalendar,
   FiDownload,
   FiChevronDown,
+  FiTag,
 } from "react-icons/fi";
 import SearchableSelect from "../components/SearchableSelect";
 
-function TicketList() {
+function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
   const [tickets, setTickets] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [officeFilter, setOfficeFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState(initialCategoryFilter);
   const [sortBy, setSortBy] = useState("newest");
 
   // Date filter states
@@ -42,6 +45,7 @@ function TicketList() {
   useEffect(() => {
     fetchTickets();
     fetchOffices();
+    fetchCategories();
 
     // Realtime subscription
     const channel = supabase
@@ -95,6 +99,21 @@ function TicketList() {
       setOffices(data || []);
     } catch (error) {
       console.error("Error fetching offices:", error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
     }
   };
 
@@ -163,7 +182,15 @@ function TicketList() {
       }
     }
 
-    return matchesSearch && matchesStatus && matchesOffice && matchesDate;
+    // Category filter: show only Borrowed & Repair categories
+    let matchesCategory = true;
+    if (categoryFilter === "BorrowedRepair") {
+      const catName = ticket.categories?.name?.toLowerCase() || "";
+      matchesCategory =
+        catName.includes("borrow") || catName.includes("repair");
+    }
+
+    return matchesSearch && matchesStatus && matchesOffice && matchesDate && matchesCategory;
   });
 
   // Apply sorting
@@ -937,6 +964,30 @@ function TicketList() {
               />
             )}
           </div>
+
+          {/* Borrowed & Repair Quick Filter */}
+          <button
+            className={`filter-pill ${categoryFilter === "BorrowedRepair" ? "active" : ""}`}
+            onClick={() =>
+              setCategoryFilter(
+                categoryFilter === "BorrowedRepair" ? "All" : "BorrowedRepair",
+              )
+            }
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              ...(categoryFilter === "BorrowedRepair" && {
+                background: "var(--warning, #f59e0b)",
+                borderColor: "var(--warning, #f59e0b)",
+                color: "white",
+              }),
+            }}
+            title="Show only Borrowed & Repair tickets"
+          >
+            <FiTag size={16} />
+            Borrowed &amp; Repair
+          </button>
 
           {/* Export Button - Compact */}
           <button
