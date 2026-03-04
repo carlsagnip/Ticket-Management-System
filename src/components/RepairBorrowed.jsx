@@ -32,6 +32,7 @@ const UNIT_TYPES = [
   { id: "keyboard",   label: "Keyboard",   icon: <FiTool size={18} /> },
   { id: "mouse",      label: "Mouse",      icon: <FiTool size={18} /> },
   { id: "avr",        label: "AVR",        icon: <FiTool size={18} /> },
+  { id: "whitescreen",label: "White Screen", icon: <FiMonitor size={18} /> },
 ];
 
 const EMPTY_FORM = {
@@ -160,7 +161,7 @@ function RepairBorrowed() {
             category:    formData.category || null,
             name:        formData.name.trim() || null,
             units,
-            date:        formData.date || null,
+            date:        formData.date || new Date().toISOString(),
             model:       formData.model.trim() || null,
             description: formData.description.trim() || null,
             status:      formData.category === "Borrowed" ? "Borrowed" : "Repairing",
@@ -579,12 +580,12 @@ function RepairBorrowed() {
                     </td>
                     <td style={{ whiteSpace: "nowrap", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
                       {rec.date
-                        ? new Date(rec.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+                        ? new Date(rec.date).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
                         : <em style={{ color: "var(--text-muted)" }}>—</em>}
                     </td>
                     <td style={{ whiteSpace: "nowrap", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
                       {rec.status === "Returned" && rec.returned_date
-                        ? new Date(rec.returned_date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+                        ? new Date(rec.returned_date).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
                         : <em style={{ color: "var(--text-muted)" }}>—</em>}
                     </td>
                     <td style={{ textAlign: "right" }}>
@@ -753,19 +754,13 @@ function RepairBorrowed() {
 
                 {/* Date */}
                 <div className="form-group">
-                  <label
-                    className="form-label"
-                    htmlFor="rb-date"
-                    style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-                  >
-                    <FiCalendar size={15} />
-                    Date
-                    <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
+                  <label className="form-label" htmlFor="date" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <FiCalendar size={15} /> Date & Time <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
                   </label>
                   <input
-                    id="rb-date"
+                    id="date"
                     name="date"
-                    type="date"
+                    type="datetime-local"
                     className="form-input"
                     value={formData.date}
                     onChange={handleChange}
@@ -1089,10 +1084,10 @@ function RepairBorrowed() {
                 {/* Date */}
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit-date" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiCalendar size={15} /> Date <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
+                    <FiCalendar size={15} /> Date & Time <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
                   </label>
-                  <input id="edit-date" name="date" type="date" className="form-input"
-                    value={editData.date || ""} onChange={handleEditChange} style={{ cursor: "pointer" }} />
+                  <input id="edit-date" name="date" type="datetime-local" className="form-input"
+                    value={editData.date ? new Date(editData.date).toISOString().slice(0, 16) : ""} onChange={handleEditChange} style={{ cursor: "pointer" }} />
                 </div>
 
                 {/* Unit Types */}
