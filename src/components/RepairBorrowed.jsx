@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
+import SearchableSelect from "./SearchableSelect";
 import {
   FiPlus,
   FiX,
@@ -18,6 +19,7 @@ import {
   FiTag,
   FiCalendar,
   FiEdit2,
+  FiBox,
 } from "react-icons/fi";
 
 // ── Unit types available for selection ────────────────────────────────────────
@@ -42,6 +44,7 @@ const EMPTY_FORM = {
   date: "",
   model: "",
   description: "",
+  scanned_barcodes: [],
 };
 
 function RepairBorrowed() {
@@ -63,6 +66,10 @@ function RepairBorrowed() {
   const [editDirty, setEditDirty]       = useState(false);
   const [lastSaved, setLastSaved]       = useState(null);
   const [statusConfirmModal, setStatusConfirmModal] = useState(null);
+
+  // Barcode specific inputs
+  const [addBarcode, setAddBarcode] = useState("");
+  const [editBarcode, setEditBarcode] = useState("");
 
   useEffect(() => {
     fetchOffices();
@@ -165,10 +172,19 @@ function RepairBorrowed() {
             model:       formData.model.trim() || null,
             description: formData.description.trim() || null,
             status:      formData.category === "Borrowed" ? "Borrowed" : "Repairing",
+            scanned_barcodes: formData.scanned_barcodes || [],
           },
         ]);
 
       if (insertError) throw insertError;
+
+      // Sync with inventory tracking
+      if (formData.scanned_barcodes && formData.scanned_barcodes.length > 0) {
+        await supabase
+          .from("inventory_items")
+          .update({ status: formData.category === "Borrowed" ? "Borrowed" : "Repairing" })
+          .in("barcode", formData.scanned_barcodes);
+      }
 
       closeModal();
       fetchRecords();
@@ -221,6 +237,7 @@ function RepairBorrowed() {
       model:       rec.model       || "",
       description: rec.description || "",
       status:      rec.status      || "",
+      scanned_barcodes: rec.scanned_barcodes || [],
     });
     // Convert units array to {id: qty} map
     const unitMap = {};
@@ -263,6 +280,130 @@ function RepairBorrowed() {
     setLastSaved(null);
   };
 
+  // ── Barcode handlers ─────────────────────────────────────────────────────────
+  const handleAddBarcodeKeyDown = async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const code = addBarcode.trim();
+      if (code && !formData.scanned_barcodes.includes(code)) {
+        setFormData(p => ({ ...p, scanned_barcodes: [...(p.scanned_barcodes || []), code] }));
+
+        if (formData.category === "Borrowed") {
+          try {
+            console.log("=== AUTO-FETCH START ===");
+            console.log("Searching for barcode:", code);
+            const { data, error } = await supabase.from("inventory_items").select("model, category").eq("barcode", code).maybeSingle();
+            
+            console.log("Supabase response:", { data, error });
+            
+            if (error) {
+              console.error("Supabase fetch error (Add):", error);
+            }
+            if (data && (data.model || data.category)) {
+              console.log("Found data:", data);
+              
+              // Automatically fetch and append model
+              if (data.model) {
+                setFormData(p => ({
+                  ...p,
+                  model: p.model ? `${p.model}, ${data.model}` : data.model
+                }));
+              }
+              
+              // Automatically detect and increment category unit
+              if (data.category) {
+                // Find matching unit type id from label. ex: "White Screen" -> "whitescreen", "Monitor" -> "monitor"
+                const matchedUnit = UNIT_TYPES.find(
+                  u => u.label.toLowerCase() === data.category.toLowerCase()
+                );
+                
+                if (matchedUnit) {
+                  const unitId = matchedUnit.id;
+                  setSelectedUnits(prev => ({
+                    ...prev,
+                    [unitId]: Number(prev[unitId] || 0) + 1
+                  }));
+                  // Clear error if there's one
+                  if (formErrors.units) {
+                    setFormErrors(p => ({ ...p, units: "" }));
+                  }
+                }
+              }
+            } else {
+              console.log("No data found for code:", code);
+            }
+          } catch (err) {
+            console.error("Error auto-fetching item:", err);
+          }
+        }
+      }
+      setAddBarcode("");
+    }
+  };
+
+  const handleRemoveAddBarcode = (code) => {
+    setFormData(p => ({
+      ...p,
+      scanned_barcodes: p.scanned_barcodes.filter(b => b !== code)
+    }));
+  };
+
+  const handleEditBarcodeKeyDown = async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const code = editBarcode.trim();
+      if (code && !(editData.scanned_barcodes || []).includes(code)) {
+        setEditData(p => ({ ...p, scanned_barcodes: [...(p.scanned_barcodes || []), code] }));
+
+        if (editData.category === "Borrowed") {
+          try {
+            const { data, error } = await supabase.from("inventory_items").select("model, category").eq("barcode", code).maybeSingle();
+            if (error) {
+              console.error("Supabase fetch error (Edit):", error);
+            }
+            if (data && (data.model || data.category)) {
+              if (data.model) {
+                setEditData(p => ({
+                  ...p,
+                  model: p.model ? `${p.model}, ${data.model}` : data.model
+                }));
+              }
+              
+              if (data.category) {
+                const matchedUnit = UNIT_TYPES.find(
+                  u => u.label.toLowerCase() === data.category.toLowerCase()
+                );
+                
+                if (matchedUnit) {
+                  const unitId = matchedUnit.id;
+                  setEditUnits(prev => ({
+                    ...prev,
+                    [unitId]: Number(prev[unitId] || 0) + 1
+                  }));
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Error auto-fetching item:", err);
+          }
+        }
+
+        setEditDirty(true);
+        setLastSaved(null);
+      }
+      setEditBarcode("");
+    }
+  };
+
+  const handleRemoveEditBarcode = (code) => {
+    setEditData(p => ({
+      ...p,
+      scanned_barcodes: (p.scanned_barcodes || []).filter(b => b !== code)
+    }));
+    setEditDirty(true);
+    setLastSaved(null);
+  };
+
   // Auto-Save effect
   useEffect(() => {
     if (!viewRecord || !editDirty) return;
@@ -286,10 +427,25 @@ function RepairBorrowed() {
                              ? (viewRecord.returned_date || new Date().toISOString())
                              : null,
             units,
+            scanned_barcodes: editData.scanned_barcodes || [],
           })
           .eq("id", viewRecord.id);
 
         if (updErr) throw updErr;
+
+        // Sync with inventory tracking
+        const removedBarcodes = (viewRecord.scanned_barcodes || []).filter(b => !(editData.scanned_barcodes || []).includes(b));
+        
+        // 1. Set removed items back to Available
+        if (removedBarcodes.length > 0) {
+          await supabase.from("inventory_items").update({ status: "Available" }).in("barcode", removedBarcodes);
+        }
+
+        // 2. Set current items to the appropriate status
+        if (editData.scanned_barcodes && editData.scanned_barcodes.length > 0) {
+          const newStatus = editData.status === "Returned" ? "Available" : (editData.category === "Borrowed" ? "Borrowed" : "Repairing");
+          await supabase.from("inventory_items").update({ status: newStatus }).in("barcode", editData.scanned_barcodes);
+        }
         
         // Background refresh table
         fetchRecords();
@@ -639,36 +795,18 @@ function RepairBorrowed() {
 
               <form id="rb-form" onSubmit={handleSubmit}>
                 {/* Office */}
-                <div className="form-group">
-                  <label
-                    className="form-label"
-                    htmlFor="rb-office"
-                    style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-                  >
-                    <FiMapPin size={15} />
-                    Office
-                    <span style={{ color: "var(--danger)" }}>*</span>
-                  </label>
-                  <select
-                    id="rb-office"
-                    name="officeId"
-                    className="form-select"
-                    value={formData.officeId}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select an office</option>
-                    {offices.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.name}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.officeId && (
-                    <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "0.25rem" }}>
-                      {formErrors.officeId}
-                    </p>
-                  )}
-                </div>
+                <SearchableSelect
+                  label="Office"
+                  name="officeId"
+                  icon={FiMapPin}
+                  options={offices}
+                  value={formData.officeId}
+                  onChange={handleChange}
+                  placeholder="Select an office"
+                  error={formErrors.officeId}
+                  required
+                  modal
+                />
 
                 {/* Category */}
                 <div className="form-group">
@@ -909,6 +1047,44 @@ function RepairBorrowed() {
                   )}
                 </div>
 
+                {/* Scanned Barcodes (Inventory Sync) */}
+                {formData.category === "Borrowed" && (
+                  <div className="form-group">
+                    <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <FiBox size={15} /> 
+                      Scanned Items
+                      <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                        (Focus input and scan barcode)
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Click here and scan barcode..."
+                      value={addBarcode}
+                      onChange={(e) => setAddBarcode(e.target.value)}
+                      onKeyDown={handleAddBarcodeKeyDown}
+                      style={{ marginBottom: "0.5rem" }}
+                    />
+                    {formData.scanned_barcodes && formData.scanned_barcodes.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                        {formData.scanned_barcodes.map(code => (
+                          <div key={code} style={{ 
+                            display: "flex", alignItems: "center", gap: "0.25rem", 
+                            background: "var(--bg-elevated)", border: "1px solid var(--border)", 
+                            padding: "4px 10px", borderRadius: "12px", fontSize: "0.8rem", fontFamily: "monospace"
+                          }}>
+                            {code}
+                            <button type="button" onClick={() => handleRemoveAddBarcode(code)} style={{ border: "none", background: "none", color: "var(--danger)", cursor: "pointer", padding: 0, display: "flex" }}>
+                              <FiX size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Model */}
                 <div className="form-group">
                   <label
@@ -928,6 +1104,7 @@ function RepairBorrowed() {
                     placeholder="e.g. HP LaserJet Pro M404n"
                     value={formData.model}
                     onChange={handleChange}
+                    disabled={formData.category === "Borrowed"}
                   />
                 </div>
 
@@ -1030,15 +1207,16 @@ function RepairBorrowed() {
               <form id="edit-rb-form" onSubmit={(e) => e.preventDefault()}>
 
                 {/* Office */}
-                <div className="form-group">
-                  <label className="form-label" htmlFor="edit-office" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiMapPin size={15} /> Office
-                  </label>
-                  <select id="edit-office" name="officeId" className="form-select" value={editData.officeId} onChange={handleEditChange}>
-                    <option value="">Select an office</option>
-                    {offices.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-                  </select>
-                </div>
+                <SearchableSelect
+                  label="Office"
+                  name="officeId"
+                  icon={FiMapPin}
+                  options={offices}
+                  value={editData.officeId}
+                  onChange={handleEditChange}
+                  placeholder="Select an office"
+                  modal
+                />
 
                 {/* Status */}
                 {editData.category && (
@@ -1146,13 +1324,50 @@ function RepairBorrowed() {
                   )}
                 </div>
 
+                {/* Scanned Barcodes (Inventory Sync) */}
+                {editData.category === "Borrowed" && (
+                  <div className="form-group">
+                    <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <FiBox size={15} /> 
+                      Scanned Items
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Click here and scan barcode to add..."
+                      value={editBarcode}
+                      onChange={(e) => setEditBarcode(e.target.value)}
+                      onKeyDown={handleEditBarcodeKeyDown}
+                      style={{ marginBottom: "0.5rem" }}
+                    />
+                    {editData.scanned_barcodes && editData.scanned_barcodes.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                        {editData.scanned_barcodes.map(code => (
+                          <div key={code} style={{ 
+                            display: "flex", alignItems: "center", gap: "0.25rem", 
+                            background: "white", border: "1px solid var(--border)", 
+                            padding: "4px 10px", borderRadius: "12px", fontSize: "0.8rem", fontFamily: "monospace",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+                          }}>
+                            {code}
+                            <button type="button" onClick={() => handleRemoveEditBarcode(code)} style={{ border: "none", background: "none", color: "var(--danger)", cursor: "pointer", padding: 0, display: "flex" }}>
+                              <FiX size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Model */}
                 <div className="form-group">
                   <label className="form-label" htmlFor="edit-model" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <FiCpu size={15} /> Model <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
                   </label>
                   <input id="edit-model" name="model" type="text" className="form-input"
-                    placeholder="e.g. HP LaserJet Pro M404n" value={editData.model || ""} onChange={handleEditChange} />
+                    placeholder="e.g. HP LaserJet Pro M404n" value={editData.model || ""} onChange={handleEditChange} 
+                    disabled={editData.category === "Borrowed"}/>
                 </div>
 
                 {/* Description */}

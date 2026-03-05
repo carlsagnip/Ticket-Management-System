@@ -15,7 +15,7 @@ const SearchableSelect = ({
   modal = false,
   name = "officeId", // Default for backward compatibility
   style = {},
-  modalWidth = "300px",
+  modalWidth = "500px",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -175,9 +175,9 @@ const SearchableSelect = ({
             </div>
 
             {/* Options List */}
-            <div style={{ overflowY: "auto", maxHeight: "160px" }}>
+            <div style={{ overflowY: "auto", maxHeight: "300px" }}>
               {" "}
-              {/* Compact height ~4 items */}
+              {/* Increased height for more items */}
               {renderOptionsList()}
             </div>
           </div>

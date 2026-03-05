@@ -5,6 +5,7 @@ import TicketList from "../components/TicketList";
 import ManageOffices from "../components/ManageOffices";
 import ManageCategories from "../components/ManageCategories";
 import RepairBorrowed from "../components/RepairBorrowed";
+import Inventory from "../components/Inventory";
 import {
   FiLogOut,
   FiFileText,
@@ -14,6 +15,7 @@ import {
   FiMenu,
   FiX,
   FiTool,
+  FiBox,
 } from "react-icons/fi";
 
 function AdminDashboard() {
@@ -53,16 +55,15 @@ function AdminDashboard() {
           className="admin-navbar-content"
           style={{
             display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
             alignItems: "center",
+            justifyContent: "space-between",
             gap: "0.75rem",
           }}
         >
           {/* Left: Branding - clickable on mobile to toggle menu */}
           <div
             className="admin-branding-wrapper"
-            style={{ position: "relative" }}
+            style={{ position: "relative", flex: 1, display: "flex", justifyContent: "flex-start" }}
           >
             <div
               className="admin-branding"
@@ -159,6 +160,11 @@ function AdminDashboard() {
                     id: "repairBorrowed",
                     label: "Repair/Borrowed",
                     icon: <FiTool size={16} />,
+                  },
+                  {
+                    id: "inventory",
+                    label: "Inventory",
+                    icon: <FiBox size={16} />,
                   },
                 ].map((item) => (
                   <button
@@ -261,7 +267,7 @@ function AdminDashboard() {
           {/* Center: Navigation Tabs - Desktop */}
           <div
             className="admin-nav-tabs admin-nav-desktop"
-            style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+            style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "center" }}
           >
             <button
               className={`nav-tab ${activeTab === "tickets" ? "active" : ""}`}
@@ -371,10 +377,40 @@ function AdminDashboard() {
               <FiTool size={16} />
               <span className="nav-tab-text">Repair/Borrowed</span>
             </button>
+            <button
+              className={`nav-tab ${activeTab === "inventory" ? "active" : ""}`}
+              onClick={() => setActiveTab("inventory")}
+              style={{
+                background:
+                  activeTab === "inventory" ? "var(--primary)" : "transparent",
+                color:
+                  activeTab === "inventory"
+                    ? "white"
+                    : "var(--text-secondary)",
+                border: "1px solid",
+                borderColor:
+                  activeTab === "inventory"
+                    ? "var(--primary)"
+                    : "var(--border)",
+                padding: "0.5rem 0.875rem",
+                borderRadius: "var(--radius-md)",
+                cursor: "pointer",
+                fontSize: "0.8125rem",
+                fontWeight: "600",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.375rem",
+              }}
+            >
+              <FiBox size={16} />
+              <span className="nav-tab-text">Inventory</span>
+            </button>
           </div>
 
           {/* Right: Logout Button */}
-          <button
+          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+            <button
             className="admin-logout-btn"
             onClick={handleLogout}
             style={{
@@ -398,6 +434,7 @@ function AdminDashboard() {
           </button>
         </div>
       </div>
+    </div>
 
       {/* Content */}
       <div
@@ -424,6 +461,7 @@ function AdminDashboard() {
           {activeTab === "offices" && <ManageOffices />}
           {activeTab === "categories" && <ManageCategories />}
           {activeTab === "repairBorrowed" && <RepairBorrowed />}
+          {activeTab === "inventory" && <Inventory />}
         </div>
       </div>
     </div>
