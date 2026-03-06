@@ -190,7 +190,13 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
         catName.includes("borrow") || catName.includes("repair");
     }
 
-    return matchesSearch && matchesStatus && matchesOffice && matchesDate && matchesCategory;
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesOffice &&
+      matchesDate &&
+      matchesCategory
+    );
   });
 
   // Apply sorting
@@ -964,30 +970,6 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
               />
             )}
           </div>
-
-          {/* Borrowed & Repair Quick Filter */}
-          <button
-            className={`filter-pill ${categoryFilter === "BorrowedRepair" ? "active" : ""}`}
-            onClick={() =>
-              setCategoryFilter(
-                categoryFilter === "BorrowedRepair" ? "All" : "BorrowedRepair",
-              )
-            }
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              ...(categoryFilter === "BorrowedRepair" && {
-                background: "var(--warning, #f59e0b)",
-                borderColor: "var(--warning, #f59e0b)",
-                color: "white",
-              }),
-            }}
-            title="Show only Borrowed & Repair tickets"
-          >
-            <FiTag size={16} />
-            Borrowed &amp; Repair
-          </button>
 
           {/* Export Button - Compact */}
           <button
