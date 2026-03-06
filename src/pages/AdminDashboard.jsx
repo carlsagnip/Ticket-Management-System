@@ -63,7 +63,12 @@ function AdminDashboard() {
           {/* Left: Branding - clickable on mobile to toggle menu */}
           <div
             className="admin-branding-wrapper"
-            style={{ position: "relative", flex: 1, display: "flex", justifyContent: "flex-start" }}
+            style={{
+              position: "relative",
+              flex: 1,
+              display: "flex",
+              justifyContent: "flex-start",
+            }}
           >
             <div
               className="admin-branding"
@@ -106,7 +111,7 @@ function AdminDashboard() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Ticket Management System
+                  Palayan City ICT Division System
                 </h1>
                 <p
                   className="admin-subtitle"
@@ -267,7 +272,12 @@ function AdminDashboard() {
           {/* Center: Navigation Tabs - Desktop */}
           <div
             className="admin-nav-tabs admin-nav-desktop"
-            style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", justifyContent: "center" }}
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
           >
             <button
               className={`nav-tab ${activeTab === "tickets" ? "active" : ""}`}
@@ -353,7 +363,9 @@ function AdminDashboard() {
               onClick={() => setActiveTab("repairBorrowed")}
               style={{
                 background:
-                  activeTab === "repairBorrowed" ? "var(--primary)" : "transparent",
+                  activeTab === "repairBorrowed"
+                    ? "var(--primary)"
+                    : "transparent",
                 color:
                   activeTab === "repairBorrowed"
                     ? "white"
@@ -384,9 +396,7 @@ function AdminDashboard() {
                 background:
                   activeTab === "inventory" ? "var(--primary)" : "transparent",
                 color:
-                  activeTab === "inventory"
-                    ? "white"
-                    : "var(--text-secondary)",
+                  activeTab === "inventory" ? "white" : "var(--text-secondary)",
                 border: "1px solid",
                 borderColor:
                   activeTab === "inventory"
@@ -411,30 +421,30 @@ function AdminDashboard() {
           {/* Right: Logout Button */}
           <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
             <button
-            className="admin-logout-btn"
-            onClick={handleLogout}
-            style={{
-              background: "var(--danger)",
-              color: "white",
-              border: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "var(--radius-md)",
-              cursor: "pointer",
-              fontSize: "0.8125rem",
-              fontWeight: "600",
-              transition: "all 0.2s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.375rem",
-              flexShrink: 0,
-            }}
-          >
-            <FiLogOut size={16} />
-            <span className="logout-text">Logout</span>
-          </button>
+              className="admin-logout-btn"
+              onClick={handleLogout}
+              style={{
+                background: "var(--danger)",
+                color: "white",
+                border: "none",
+                padding: "0.5rem 1rem",
+                borderRadius: "var(--radius-md)",
+                cursor: "pointer",
+                fontSize: "0.8125rem",
+                fontWeight: "600",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.375rem",
+                flexShrink: 0,
+              }}
+            >
+              <FiLogOut size={16} />
+              <span className="logout-text">Logout</span>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
       {/* Content */}
       <div

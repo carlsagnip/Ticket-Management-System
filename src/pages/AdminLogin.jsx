@@ -70,7 +70,7 @@ function AdminLogin() {
                 fontWeight: "700",
               }}
             >
-              Ticket Management System Admin Login
+              Palayan City ICT Division System Admin Login
             </h1>
             <p
               style={{ color: "var(--text-secondary)", fontSize: "0.9375rem" }}

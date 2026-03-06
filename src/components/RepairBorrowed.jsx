@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import SearchableSelect from "./SearchableSelect";
 import {
@@ -20,21 +20,23 @@ import {
   FiCalendar,
   FiEdit2,
   FiBox,
+  FiSearch,
+  FiFilter,
+  FiChevronDown,
 } from "react-icons/fi";
 
-// ── Unit types available for selection ────────────────────────────────────────
 const UNIT_TYPES = [
-  { id: "computer",   label: "Computer",   icon: <FiCpu size={18} /> },
-  { id: "laptop",     label: "Laptop",     icon: <FiHardDrive size={18} /> },
-  { id: "printer",    label: "Printer",    icon: <FiPrinter size={18} /> },
-  { id: "monitor",    label: "Monitor",    icon: <FiMonitor size={18} /> },
-  { id: "scanner",    label: "Scanner",    icon: <FiCamera size={18} /> },
-  { id: "projector",  label: "Projector",  icon: <FiTool size={18} /> },
-  { id: "ups",        label: "UPS",        icon: <FiTool size={18} /> },
-  { id: "keyboard",   label: "Keyboard",   icon: <FiTool size={18} /> },
-  { id: "mouse",      label: "Mouse",      icon: <FiTool size={18} /> },
-  { id: "avr",        label: "AVR",        icon: <FiTool size={18} /> },
-  { id: "whitescreen",label: "White Screen", icon: <FiMonitor size={18} /> },
+  { id: "computer", label: "Computer", icon: <FiCpu size={18} /> },
+  { id: "laptop", label: "Laptop", icon: <FiHardDrive size={18} /> },
+  { id: "printer", label: "Printer", icon: <FiPrinter size={18} /> },
+  { id: "monitor", label: "Monitor", icon: <FiMonitor size={18} /> },
+  { id: "scanner", label: "Scanner", icon: <FiCamera size={18} /> },
+  { id: "projector", label: "Projector", icon: <FiTool size={18} /> },
+  { id: "ups", label: "UPS", icon: <FiTool size={18} /> },
+  { id: "keyboard", label: "Keyboard", icon: <FiTool size={18} /> },
+  { id: "mouse", label: "Mouse", icon: <FiTool size={18} /> },
+  { id: "avr", label: "AVR", icon: <FiTool size={18} /> },
+  { id: "whitescreen", label: "White Screen", icon: <FiMonitor size={18} /> },
 ];
 
 const EMPTY_FORM = {
@@ -48,35 +50,51 @@ const EMPTY_FORM = {
 };
 
 function RepairBorrowed() {
-  const [records, setRecords]           = useState([]);
-  const [offices, setOffices]           = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [showModal, setShowModal]       = useState(false);
-  const [submitting, setSubmitting]     = useState(false);
-  const [error, setError]               = useState("");
-  const [formData, setFormData]         = useState(EMPTY_FORM);
-  const [formErrors, setFormErrors]     = useState({});
+  const [records, setRecords] = useState([]);
+  const [offices, setOffices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [formErrors, setFormErrors] = useState({});
   const [selectedUnits, setSelectedUnits] = useState({});
-  // ── View / edit state ──
-  const [viewRecord, setViewRecord]     = useState(null);
-  const [editData, setEditData]         = useState({});
-  const [editUnits, setEditUnits]       = useState({});
-  const [editSaving, setEditSaving]     = useState(false);
-  const [editError, setEditError]       = useState("");
-  const [editDirty, setEditDirty]       = useState(false);
-  const [lastSaved, setLastSaved]       = useState(null);
+  // '”€'”€ View / edit state '”€'”€
+  const [viewRecord, setViewRecord] = useState(null);
+  const [editData, setEditData] = useState({});
+  const [editUnits, setEditUnits] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editDirty, setEditDirty] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
   const [statusConfirmModal, setStatusConfirmModal] = useState(null);
+
+  // ── Filter bar state ──
+  const [rbSearch, setRbSearch] = useState("");
+  const [rbOffice, setRbOffice] = useState("");
+  const [rbCategory, setRbCategory] = useState("");
+  const [rbUnit, setRbUnit] = useState("");
+  const [rbStatus, setRbStatus] = useState("");
+  const [showRbOfficeDD, setShowRbOfficeDD] = useState(false);
+  const [showRbCategoryDD, setShowRbCategoryDD] = useState(false);
+  const [showRbUnitDD, setShowRbUnitDD] = useState(false);
+  const [showRbStatusDD, setShowRbStatusDD] = useState(false);
 
   // Barcode specific inputs
   const [addBarcode, setAddBarcode] = useState("");
   const [editBarcode, setEditBarcode] = useState("");
+  // Already-borrowed barcode warnings
+  const [borrowedWarnAdd, setBorrowedWarnAdd] = useState("");
+  const [borrowedWarnEdit, setBorrowedWarnEdit] = useState("");
+  // Map: barcode → { model, unitId } so removal stays in sync
+  const [barcodeModelMap, setBarcodeModelMap] = useState({});
 
   useEffect(() => {
     fetchOffices();
     fetchRecords();
   }, []);
 
-  // ── Data fetching ────────────────────────────────────────────────────────────
+  // '”€'”€ Data fetching '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   const fetchOffices = async () => {
     try {
       const { data, error } = await supabase
@@ -107,7 +125,7 @@ function RepairBorrowed() {
     }
   };
 
-  // ── Unit type button handler ──────────────────────────────────────────────────
+  // '”€'”€ Unit type button handler '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   const handleUnitClick = (unitId) => {
     setSelectedUnits((prev) => ({
       ...prev,
@@ -127,7 +145,7 @@ function RepairBorrowed() {
     });
   };
 
-  // ── Form helpers ─────────────────────────────────────────────────────────────
+  // '”€'”€ Form helpers '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -164,14 +182,14 @@ function RepairBorrowed() {
         .from("repair_borrowed")
         .insert([
           {
-            office_id:   formData.officeId || null,
-            category:    formData.category || null,
-            name:        formData.name.trim() || null,
+            office_id: formData.officeId || null,
+            category: formData.category || null,
+            name: formData.name.trim() || null,
             units,
-            date:        formData.date || new Date().toISOString(),
-            model:       formData.model.trim() || null,
+            date: formData.date || new Date().toISOString(),
+            model: formData.model.trim() || null,
             description: formData.description.trim() || null,
-            status:      formData.category === "Borrowed" ? "Borrowed" : "Repairing",
+            status: formData.category === "Borrowed" ? "Borrowed" : "Repairing",
             scanned_barcodes: formData.scanned_barcodes || [],
           },
         ]);
@@ -182,7 +200,9 @@ function RepairBorrowed() {
       if (formData.scanned_barcodes && formData.scanned_barcodes.length > 0) {
         await supabase
           .from("inventory_items")
-          .update({ status: formData.category === "Borrowed" ? "Borrowed" : "Repairing" })
+          .update({
+            status: formData.category === "Borrowed" ? "Borrowed" : "Repairing",
+          })
           .in("barcode", formData.scanned_barcodes);
       }
 
@@ -197,8 +217,33 @@ function RepairBorrowed() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this record? This cannot be undone.")) return;
+    if (
+      !confirm(
+        "Delete this record? This cannot be undone.\n\nIf this is a Borrowed record, all borrowed items will be marked Available again.",
+      )
+    )
+      return;
     try {
+      // Find the record in local state so we have its barcodes & category
+      const record = records.find((r) => r.id === id);
+
+      // If it's a Borrowed record with scanned barcodes, reset them to Available
+      if (
+        record?.category === "Borrowed" &&
+        Array.isArray(record.scanned_barcodes) &&
+        record.scanned_barcodes.length > 0
+      ) {
+        const { error: updateErr } = await supabase
+          .from("inventory_items")
+          .update({ status: "Available" })
+          .in("barcode", record.scanned_barcodes);
+
+        if (updateErr) {
+          console.error("Error resetting inventory status:", updateErr);
+          // Non-fatal — still proceed with delete
+        }
+      }
+
       const { error: delErr } = await supabase
         .from("repair_borrowed")
         .delete()
@@ -215,6 +260,7 @@ function RepairBorrowed() {
     setSelectedUnits({});
     setFormErrors({});
     setError("");
+    setBarcodeModelMap({});
     setShowModal(true);
   };
 
@@ -224,24 +270,27 @@ function RepairBorrowed() {
     setSelectedUnits({});
     setFormErrors({});
     setError("");
+    setBarcodeModelMap({});
   };
 
-  // ── View / Edit handlers ──────────────────────────────────────────────────────
+  // '”€'”€ View / Edit handlers '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   const openViewModal = (rec) => {
     setViewRecord(rec);
     setEditData({
-      officeId:    rec.office_id   || "",
-      category:    rec.category    || "",
-      name:        rec.name        || "",
-      date:        rec.date        || "",
-      model:       rec.model       || "",
+      officeId: rec.office_id || "",
+      category: rec.category || "",
+      name: rec.name || "",
+      date: rec.date || "",
+      model: rec.model || "",
       description: rec.description || "",
-      status:      rec.status      || "",
+      status: rec.status || "",
       scanned_barcodes: rec.scanned_barcodes || [],
     });
     // Convert units array to {id: qty} map
     const unitMap = {};
-    (rec.units || []).forEach((u) => { unitMap[u.type] = u.quantity; });
+    (rec.units || []).forEach((u) => {
+      unitMap[u.type] = u.quantity;
+    });
     setEditUnits(unitMap);
     setEditError("");
   };
@@ -280,105 +329,159 @@ function RepairBorrowed() {
     setLastSaved(null);
   };
 
-  // ── Barcode handlers ─────────────────────────────────────────────────────────
+  // '”€'”€ Barcode handlers '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   const handleAddBarcodeKeyDown = async (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const code = addBarcode.trim();
+      setBorrowedWarnAdd("");
       if (code && !formData.scanned_barcodes.includes(code)) {
-        setFormData(p => ({ ...p, scanned_barcodes: [...(p.scanned_barcodes || []), code] }));
-
         if (formData.category === "Borrowed") {
           try {
-            console.log("=== AUTO-FETCH START ===");
-            console.log("Searching for barcode:", code);
-            const { data, error } = await supabase.from("inventory_items").select("model, category").eq("barcode", code).maybeSingle();
-            
-            console.log("Supabase response:", { data, error });
-            
-            if (error) {
-              console.error("Supabase fetch error (Add):", error);
+            const { data, error } = await supabase
+              .from("inventory_items")
+              .select("model, category, status")
+              .eq("barcode", code)
+              .maybeSingle();
+
+            if (error) console.error("Supabase fetch error (Add):", error);
+
+            // '”€'”€ Block if already borrowed '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
+            if (data && data.status === "Borrowed") {
+              const modelName = data.model
+                ? `"${data.model}"`
+                : `barcode ${code}`;
+              setBorrowedWarnAdd(
+                `${modelName} is already borrowed and has not been returned yet.`,
+              );
+              setAddBarcode("");
+              return;
             }
+
             if (data && (data.model || data.category)) {
-              console.log("Found data:", data);
-              
-              // Automatically fetch and append model
+              let matchedUnitId = null;
+              // Append model
               if (data.model) {
-                setFormData(p => ({
+                setFormData((p) => ({
                   ...p,
-                  model: p.model ? `${p.model}, ${data.model}` : data.model
+                  model: p.model ? `${p.model}, ${data.model}` : data.model,
                 }));
               }
-              
-              // Automatically detect and increment category unit
+              // Increment unit count
               if (data.category) {
-                // Find matching unit type id from label. ex: "White Screen" -> "whitescreen", "Monitor" -> "monitor"
                 const matchedUnit = UNIT_TYPES.find(
-                  u => u.label.toLowerCase() === data.category.toLowerCase()
+                  (u) => u.label.toLowerCase() === data.category.toLowerCase(),
                 );
-                
                 if (matchedUnit) {
-                  const unitId = matchedUnit.id;
-                  setSelectedUnits(prev => ({
+                  matchedUnitId = matchedUnit.id;
+                  setSelectedUnits((prev) => ({
                     ...prev,
-                    [unitId]: Number(prev[unitId] || 0) + 1
+                    [matchedUnitId]: Number(prev[matchedUnitId] || 0) + 1,
                   }));
-                  // Clear error if there's one
-                  if (formErrors.units) {
-                    setFormErrors(p => ({ ...p, units: "" }));
-                  }
+                  if (formErrors.units)
+                    setFormErrors((p) => ({ ...p, units: "" }));
                 }
               }
-            } else {
-              console.log("No data found for code:", code);
+              // Record mapping so removal can undo both model text + unit
+              setBarcodeModelMap((prev) => ({
+                ...prev,
+                [code]: { model: data.model || null, unitId: matchedUnitId },
+              }));
             }
           } catch (err) {
             console.error("Error auto-fetching item:", err);
           }
         }
+        setFormData((p) => ({
+          ...p,
+          scanned_barcodes: [...(p.scanned_barcodes || []), code],
+        }));
       }
       setAddBarcode("");
     }
   };
 
   const handleRemoveAddBarcode = (code) => {
-    setFormData(p => ({
-      ...p,
-      scanned_barcodes: p.scanned_barcodes.filter(b => b !== code)
-    }));
+    const entry = barcodeModelMap[code];
+    setFormData((p) => {
+      let newModel = p.model;
+      if (entry?.model) {
+        // Remove the exact model fragment (handles both middle and end positions)
+        newModel = p.model
+          .split(", ")
+          .filter((m) => m !== entry.model)
+          .join(", ");
+      }
+      return {
+        ...p,
+        scanned_barcodes: p.scanned_barcodes.filter((b) => b !== code),
+        model: newModel,
+      };
+    });
+    // Decrement the unit count that was auto-added for this barcode
+    if (entry?.unitId) {
+      setSelectedUnits((prev) => {
+        const next = { ...prev };
+        if ((next[entry.unitId] || 0) > 1) {
+          next[entry.unitId] -= 1;
+        } else {
+          delete next[entry.unitId];
+        }
+        return next;
+      });
+    }
+    // Clean up the map entry
+    setBarcodeModelMap((prev) => {
+      const next = { ...prev };
+      delete next[code];
+      return next;
+    });
   };
 
   const handleEditBarcodeKeyDown = async (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const code = editBarcode.trim();
+      setBorrowedWarnEdit("");
       if (code && !(editData.scanned_barcodes || []).includes(code)) {
-        setEditData(p => ({ ...p, scanned_barcodes: [...(p.scanned_barcodes || []), code] }));
-
         if (editData.category === "Borrowed") {
           try {
-            const { data, error } = await supabase.from("inventory_items").select("model, category").eq("barcode", code).maybeSingle();
-            if (error) {
-              console.error("Supabase fetch error (Edit):", error);
+            const { data, error } = await supabase
+              .from("inventory_items")
+              .select("model, category, status")
+              .eq("barcode", code)
+              .maybeSingle();
+
+            if (error) console.error("Supabase fetch error (Edit):", error);
+
+            // '”€'”€ Block if already borrowed '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
+            if (data && data.status === "Borrowed") {
+              const modelName = data.model
+                ? `"${data.model}"`
+                : `barcode ${code}`;
+              setBorrowedWarnEdit(
+                `${modelName} is already borrowed and has not been returned yet.`,
+              );
+              setEditBarcode("");
+              return;
             }
+
             if (data && (data.model || data.category)) {
               if (data.model) {
-                setEditData(p => ({
+                setEditData((p) => ({
                   ...p,
-                  model: p.model ? `${p.model}, ${data.model}` : data.model
+                  model: p.model ? `${p.model}, ${data.model}` : data.model,
                 }));
               }
-              
               if (data.category) {
                 const matchedUnit = UNIT_TYPES.find(
-                  u => u.label.toLowerCase() === data.category.toLowerCase()
+                  (u) => u.label.toLowerCase() === data.category.toLowerCase(),
                 );
-                
                 if (matchedUnit) {
                   const unitId = matchedUnit.id;
-                  setEditUnits(prev => ({
+                  setEditUnits((prev) => ({
                     ...prev,
-                    [unitId]: Number(prev[unitId] || 0) + 1
+                    [unitId]: Number(prev[unitId] || 0) + 1,
                   }));
                 }
               }
@@ -387,7 +490,10 @@ function RepairBorrowed() {
             console.error("Error auto-fetching item:", err);
           }
         }
-
+        setEditData((p) => ({
+          ...p,
+          scanned_barcodes: [...(p.scanned_barcodes || []), code],
+        }));
         setEditDirty(true);
         setLastSaved(null);
       }
@@ -396,9 +502,9 @@ function RepairBorrowed() {
   };
 
   const handleRemoveEditBarcode = (code) => {
-    setEditData(p => ({
+    setEditData((p) => ({
       ...p,
-      scanned_barcodes: (p.scanned_barcodes || []).filter(b => b !== code)
+      scanned_barcodes: (p.scanned_barcodes || []).filter((b) => b !== code),
     }));
     setEditDirty(true);
     setLastSaved(null);
@@ -412,20 +518,24 @@ function RepairBorrowed() {
       setEditSaving(true);
       setEditError("");
       try {
-        const units = Object.entries(editUnits).map(([type, quantity]) => ({ type, quantity }));
+        const units = Object.entries(editUnits).map(([type, quantity]) => ({
+          type,
+          quantity,
+        }));
         const { error: updErr } = await supabase
           .from("repair_borrowed")
           .update({
-            office_id:   editData.officeId    || null,
-            category:    editData.category    || null,
-            name:        editData.name.trim() || null,
-            date:        editData.date        || null,
-            model:       editData.model.trim()|| null,
+            office_id: editData.officeId || null,
+            category: editData.category || null,
+            name: editData.name.trim() || null,
+            date: editData.date || null,
+            model: editData.model.trim() || null,
             description: editData.description.trim() || null,
-            status:      editData.status      || null,
-            returned_date: editData.status === "Returned"
-                             ? (viewRecord.returned_date || new Date().toISOString())
-                             : null,
+            status: editData.status || null,
+            returned_date:
+              editData.status === "Returned"
+                ? viewRecord.returned_date || new Date().toISOString()
+                : null,
             units,
             scanned_barcodes: editData.scanned_barcodes || [],
           })
@@ -434,19 +544,32 @@ function RepairBorrowed() {
         if (updErr) throw updErr;
 
         // Sync with inventory tracking
-        const removedBarcodes = (viewRecord.scanned_barcodes || []).filter(b => !(editData.scanned_barcodes || []).includes(b));
-        
+        const removedBarcodes = (viewRecord.scanned_barcodes || []).filter(
+          (b) => !(editData.scanned_barcodes || []).includes(b),
+        );
+
         // 1. Set removed items back to Available
         if (removedBarcodes.length > 0) {
-          await supabase.from("inventory_items").update({ status: "Available" }).in("barcode", removedBarcodes);
+          await supabase
+            .from("inventory_items")
+            .update({ status: "Available" })
+            .in("barcode", removedBarcodes);
         }
 
         // 2. Set current items to the appropriate status
         if (editData.scanned_barcodes && editData.scanned_barcodes.length > 0) {
-          const newStatus = editData.status === "Returned" ? "Available" : (editData.category === "Borrowed" ? "Borrowed" : "Repairing");
-          await supabase.from("inventory_items").update({ status: newStatus }).in("barcode", editData.scanned_barcodes);
+          const newStatus =
+            editData.status === "Returned"
+              ? "Available"
+              : editData.category === "Borrowed"
+                ? "Borrowed"
+                : "Repairing";
+          await supabase
+            .from("inventory_items")
+            .update({ status: newStatus })
+            .in("barcode", editData.scanned_barcodes);
         }
-        
+
         // Background refresh table
         fetchRecords();
         setEditDirty(false);
@@ -466,7 +589,7 @@ function RepairBorrowed() {
     return () => clearTimeout(timer);
   }, [editData, editUnits, editDirty, viewRecord]);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
+  // '”€'”€ Helpers '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   const formatDate = (str) =>
     new Date(str).toLocaleDateString("en-US", {
       year: "numeric",
@@ -479,27 +602,52 @@ function RepairBorrowed() {
   const unitLabel = (unitId) =>
     UNIT_TYPES.find((u) => u.id === unitId)?.label ?? unitId;
 
-  // ── Computed statistics ───────────────────────────────────────────────────────
+  // '”€'”€ Computed statistics '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   const borrowedRecords = records.filter((r) => r.category === "Borrowed");
-  const repairRecords   = records.filter((r) => r.category === "Repair");
+  const repairRecords = records.filter((r) => r.category === "Repair");
 
   const borrowStats = {
-    total:    borrowedRecords.length,
-    active:   borrowedRecords.filter((r) => r.status !== "Returned").length,
+    total: borrowedRecords.length,
+    active: borrowedRecords.filter((r) => r.status !== "Returned").length,
     returned: borrowedRecords.filter((r) => r.status === "Returned").length,
   };
 
   const repairStats = {
-    total:     repairRecords.length,
+    total: repairRecords.length,
     repairing: repairRecords.filter((r) => r.status !== "Returned").length,
-    returned:  repairRecords.filter((r) => r.status === "Returned").length,
+    returned: repairRecords.filter((r) => r.status === "Returned").length,
+  };
+  // -- Filtered records --
+  const filteredRecords = records.filter((rec) => {
+    if (rbSearch) {
+      const q = rbSearch.toLowerCase();
+      const matchOffice = rec.offices?.name?.toLowerCase().includes(q);
+      const matchModel = rec.model?.toLowerCase().includes(q);
+      const matchName = rec.name?.toLowerCase().includes(q);
+      if (!matchOffice && !matchModel && !matchName) return false;
+    }
+    if (rbOffice && rec.office_id !== rbOffice) return false;
+    if (rbCategory && rec.category !== rbCategory) return false;
+    if (rbUnit && !(rec.units || []).some((u) => u.type === rbUnit)) return false;
+    if (rbStatus && rec.status !== rbStatus) return false;
+    return true;
+  });
+  const rbHasFilters = rbSearch || rbOffice || rbCategory || rbUnit || rbStatus;
+  const clearRbFilters = () => {
+    setRbSearch(''); setRbOffice(''); setRbCategory(''); setRbUnit(''); setRbStatus('');
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // '”€'”€ Render '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-
-      {/* ── Page header ── */}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      {/* '”€'”€ Page header '”€'”€ */}
       <div
         style={{
           display: "flex",
@@ -524,7 +672,13 @@ function RepairBorrowed() {
             <FiTool size={22} style={{ color: "var(--primary)" }} />
             Repair / Borrowed
           </h2>
-          <p style={{ margin: "0.25rem 0 0", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+          <p
+            style={{
+              margin: "0.25rem 0 0",
+              color: "var(--text-secondary)",
+              fontSize: "0.875rem",
+            }}
+          >
             Track equipment sent for repair or borrowed by offices.
           </p>
         </div>
@@ -535,59 +689,274 @@ function RepairBorrowed() {
         </button>
       </div>
 
-      {/* ── Statistics ── */}
+      {/* '”€'”€ Statistics '”€'”€ */}
       {!loading && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem", flexShrink: 0 }}>
-
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem",
+            marginBottom: "1.5rem",
+            flexShrink: 0,
+          }}
+        >
           {/* Borrowed stats */}
-          <div style={{ background: "var(--bg-card)", border: "1px solid #bfdbfe", borderRadius: "var(--radius-lg)", padding: "1rem", boxShadow: "var(--shadow-sm)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.875rem" }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#2563eb", flexShrink: 0 }} />
-              <span style={{ fontWeight: "700", fontSize: "0.875rem", color: "#2563eb", textTransform: "uppercase", letterSpacing: "0.05em" }}>Borrowed</span>
+          <div
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid #bfdbfe",
+              borderRadius: "var(--radius-lg)",
+              padding: "1rem",
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "0.875rem",
+              }}
+            >
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: "#2563eb",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontWeight: "700",
+                  fontSize: "0.875rem",
+                  color: "#2563eb",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Borrowed
+              </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "0.75rem",
+              }}
+            >
               {[
-                { label: "Total Borrowed", value: borrowStats.total,    bg: "#eff6ff", color: "#1e40af" },
-                { label: "Borrowed",       value: borrowStats.active,   bg: "#dbeafe", color: "#2563eb" },
-                { label: "Returned",       value: borrowStats.returned, bg: "#d1fae5", color: "#065f46" },
+                {
+                  label: "Total Borrowed",
+                  value: borrowStats.total,
+                  bg: "#eff6ff",
+                  color: "#1e40af",
+                },
+                {
+                  label: "Borrowed",
+                  value: borrowStats.active,
+                  bg: "#dbeafe",
+                  color: "#2563eb",
+                },
+                {
+                  label: "Returned",
+                  value: borrowStats.returned,
+                  bg: "#d1fae5",
+                  color: "#065f46",
+                },
               ].map((s) => (
-                <div key={s.label} style={{ background: s.bg, borderRadius: "var(--radius-md)", padding: "0.75rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "1.5rem", fontWeight: "800", color: s.color, lineHeight: 1 }}>{s.value}</div>
-                  <div style={{ fontSize: "0.7rem", fontWeight: "600", color: s.color, marginTop: "0.25rem", opacity: 0.8 }}>{s.label}</div>
+                <div
+                  key={s.label}
+                  style={{
+                    background: s.bg,
+                    borderRadius: "var(--radius-md)",
+                    padding: "0.75rem",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "800",
+                      color: s.color,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {s.value}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: "600",
+                      color: s.color,
+                      marginTop: "0.25rem",
+                      opacity: 0.8,
+                    }}
+                  >
+                    {s.label}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Repair stats */}
-          <div style={{ background: "var(--bg-card)", border: "1px solid #ddd6fe", borderRadius: "var(--radius-lg)", padding: "1rem", boxShadow: "var(--shadow-sm)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.875rem" }}>
-              <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#7c3aed", flexShrink: 0 }} />
-              <span style={{ fontWeight: "700", fontSize: "0.875rem", color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.05em" }}>Repair</span>
+          <div
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid #ddd6fe",
+              borderRadius: "var(--radius-lg)",
+              padding: "1rem",
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                marginBottom: "0.875rem",
+              }}
+            >
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: "#7c3aed",
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontWeight: "700",
+                  fontSize: "0.875rem",
+                  color: "#7c3aed",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Repair
+              </span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "0.75rem",
+              }}
+            >
               {[
-                { label: "Total Repair", value: repairStats.total,     bg: "#f5f3ff", color: "#6d28d9" },
-                { label: "Repairing",   value: repairStats.repairing, bg: "#ede9fe", color: "#7c3aed" },
-                { label: "Returned",    value: repairStats.returned,  bg: "#d1fae5", color: "#065f46" },
+                {
+                  label: "Total Repair",
+                  value: repairStats.total,
+                  bg: "#f5f3ff",
+                  color: "#6d28d9",
+                },
+                {
+                  label: "Repairing",
+                  value: repairStats.repairing,
+                  bg: "#ede9fe",
+                  color: "#7c3aed",
+                },
+                {
+                  label: "Returned",
+                  value: repairStats.returned,
+                  bg: "#d1fae5",
+                  color: "#065f46",
+                },
               ].map((s) => (
-                <div key={s.label} style={{ background: s.bg, borderRadius: "var(--radius-md)", padding: "0.75rem", textAlign: "center" }}>
-                  <div style={{ fontSize: "1.5rem", fontWeight: "800", color: s.color, lineHeight: 1 }}>{s.value}</div>
-                  <div style={{ fontSize: "0.7rem", fontWeight: "600", color: s.color, marginTop: "0.25rem", opacity: 0.8 }}>{s.label}</div>
+                <div
+                  key={s.label}
+                  style={{
+                    background: s.bg,
+                    borderRadius: "var(--radius-md)",
+                    padding: "0.75rem",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "1.5rem",
+                      fontWeight: "800",
+                      color: s.color,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {s.value}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: "600",
+                      color: s.color,
+                      marginTop: "0.25rem",
+                      opacity: 0.8,
+                    }}
+                  >
+                    {s.label}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-
         </div>
       )}
 
-      {/* ── Records list ── */}
+      {/* action-bar */}
+      <div style={{display:"flex",gap:"0.75rem",flexWrap:"wrap",alignItems:"center",flexShrink:0,marginBottom:"0.75rem"}}>
+        <div style={{position:"relative",flex:"1",minWidth:"200px"}}>
+          <FiSearch style={{position:"absolute",left:"1rem",top:"50%",transform:"translateY(-50%)",color:"var(--text-muted)",width:"16px",height:"16px",pointerEvents:"none"}} />
+          <input type="text" className="form-input" placeholder="Search by office, model or name..." value={rbSearch} onChange={(e)=>setRbSearch(e.target.value)} style={{paddingLeft:"2.5rem",margin:0,height:"38px"}} />
+        </div>
+        <div style={{display:"flex",gap:"0.5rem",alignItems:"center",flexWrap:"wrap"}}>
+          <button className="filter-pill" style={{display:"flex",alignItems:"center",gap:"0.5rem",cursor:"default"}}><FiFilter size={14}/> All ({filteredRecords.length})</button>
+          {/* Office */}
+          <div style={{position:"relative"}}>
+            <button className={`filter-pill ${rbOffice?"active":""}`} onClick={()=>{setShowRbOfficeDD(!showRbOfficeDD);setShowRbCategoryDD(false);setShowRbUnitDD(false);setShowRbStatusDD(false);}} style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+              {rbOffice?(offices.find(o=>o.id===rbOffice)?.name||rbOffice):"All Offices"}<FiChevronDown size={14}/>
+            </button>
+            {showRbOfficeDD&&(<><div style={{position:"absolute",top:"100%",left:0,marginTop:"0.5rem",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-lg)",zIndex:50,minWidth:"220px",maxHeight:"280px",overflow:"auto"}}>
+              {["",...offices.map(o=>o.id)].map(id=>{const label=id?(offices.find(o=>o.id===id)?.name??id):"All Offices";return(<button key={id||"__all__"} onClick={()=>{setRbOffice(id);setShowRbOfficeDD(false);}} style={{width:"100%",padding:"0.75rem 1rem",border:"none",background:rbOffice===id?"var(--primary)":"transparent",color:rbOffice===id?"white":"var(--text-primary)",textAlign:"left",cursor:"pointer",fontSize:"0.875rem",fontWeight:"500"}} onMouseEnter={e=>{if(rbOffice!==id)e.currentTarget.style.background="var(--bg-elevated)";}} onMouseLeave={e=>{if(rbOffice!==id)e.currentTarget.style.background="transparent";}}>{label}</button>);})}
+            </div><div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setShowRbOfficeDD(false)}/></>)}
+          </div>
+          {/* Category */}
+          <div style={{position:"relative"}}>
+            <button className={`filter-pill ${rbCategory?"active":""}`} onClick={()=>{setShowRbCategoryDD(!showRbCategoryDD);setShowRbOfficeDD(false);setShowRbUnitDD(false);setShowRbStatusDD(false);}} style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+              {rbCategory||"All Categories"}<FiChevronDown size={14}/>
+            </button>
+            {showRbCategoryDD&&(<><div style={{position:"absolute",top:"100%",left:0,marginTop:"0.5rem",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-lg)",zIndex:50,minWidth:"160px",overflow:"hidden"}}>
+              {["",...["Borrowed","Repair"]].map(c=><button key={c||"__all__"} onClick={()=>{setRbCategory(c);setShowRbCategoryDD(false);}} style={{width:"100%",padding:"0.75rem 1rem",border:"none",background:rbCategory===c?"var(--primary)":"transparent",color:rbCategory===c?"white":"var(--text-primary)",textAlign:"left",cursor:"pointer",fontSize:"0.875rem",fontWeight:"500"}} onMouseEnter={e=>{if(rbCategory!==c)e.currentTarget.style.background="var(--bg-elevated)";}} onMouseLeave={e=>{if(rbCategory!==c)e.currentTarget.style.background="transparent";}}>{c||"All Categories"}</button>)}
+            </div><div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setShowRbCategoryDD(false)}/></>)}
+          </div>
+          {/* Units */}
+          <div style={{position:"relative"}}>
+            <button className={`filter-pill ${rbUnit?"active":""}`} onClick={()=>{setShowRbUnitDD(!showRbUnitDD);setShowRbOfficeDD(false);setShowRbCategoryDD(false);setShowRbStatusDD(false);}} style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+              {rbUnit?(UNIT_TYPES.find(u=>u.id===rbUnit)?.label??rbUnit):"All Units"}<FiChevronDown size={14}/>
+            </button>
+            {showRbUnitDD&&(<><div style={{position:"absolute",top:"100%",left:0,marginTop:"0.5rem",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-lg)",zIndex:50,minWidth:"160px",maxHeight:"280px",overflow:"auto"}}>
+              {["",...UNIT_TYPES.map(u=>u.id)].map(id=>{const label=id?(UNIT_TYPES.find(u=>u.id===id)?.label??id):"All Units";return(<button key={id||"__all__"} onClick={()=>{setRbUnit(id);setShowRbUnitDD(false);}} style={{width:"100%",padding:"0.75rem 1rem",border:"none",background:rbUnit===id?"var(--primary)":"transparent",color:rbUnit===id?"white":"var(--text-primary)",textAlign:"left",cursor:"pointer",fontSize:"0.875rem",fontWeight:"500"}} onMouseEnter={e=>{if(rbUnit!==id)e.currentTarget.style.background="var(--bg-elevated)";}} onMouseLeave={e=>{if(rbUnit!==id)e.currentTarget.style.background="transparent";}}>{label}</button>);})}
+            </div><div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setShowRbUnitDD(false)}/></>)}
+          </div>
+          {/* Status */}
+          <div style={{position:"relative"}}>
+            <button className={`filter-pill ${rbStatus?"active":""}`} onClick={()=>{setShowRbStatusDD(!showRbStatusDD);setShowRbOfficeDD(false);setShowRbCategoryDD(false);setShowRbUnitDD(false);}} style={{display:"flex",alignItems:"center",gap:"0.5rem"}}>
+              {rbStatus||"All Statuses"}<FiChevronDown size={14}/>
+            </button>
+            {showRbStatusDD&&(<><div style={{position:"absolute",top:"100%",left:0,marginTop:"0.5rem",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-md)",boxShadow:"var(--shadow-lg)",zIndex:50,minWidth:"160px",overflow:"hidden"}}>
+              {["",...["Borrowed","Repairing","Returned"]].map(s=><button key={s||"__all__"} onClick={()=>{setRbStatus(s);setShowRbStatusDD(false);}} style={{width:"100%",padding:"0.75rem 1rem",border:"none",background:rbStatus===s?"var(--primary)":"transparent",color:rbStatus===s?"white":"var(--text-primary)",textAlign:"left",cursor:"pointer",fontSize:"0.875rem",fontWeight:"500"}} onMouseEnter={e=>{if(rbStatus!==s)e.currentTarget.style.background="var(--bg-elevated)";}} onMouseLeave={e=>{if(rbStatus!==s)e.currentTarget.style.background="transparent";}}>{s||"All Statuses"}</button>)}
+            </div><div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setShowRbStatusDD(false)}/></>)}
+          </div>
+          {rbHasFilters&&(<button className="filter-pill" onClick={clearRbFilters} style={{display:"flex",alignItems:"center",gap:"0.4rem"}}><FiX size={14}/> Clear</button>)}
+        </div>
+      </div>
+      {/* '”€'”€ Records list '”€'”€ */}
       {loading ? (
         <div className="loading-container">
           <div className="spinner" />
         </div>
-      ) : records.length === 0 ? (
+      ) : filteredRecords.length === 0 ? (
         <div
           style={{
             flex: 1,
@@ -601,7 +970,9 @@ function RepairBorrowed() {
         >
           <FiInbox size={56} style={{ opacity: 0.4 }} />
           <p style={{ fontSize: "1.125rem", fontWeight: "600", margin: 0 }}>
-            No records yet.
+            {rbHasFilters
+              ? "No records match your filters."
+              : "No records yet."}
           </p>
           <p style={{ margin: 0, fontSize: "0.875rem" }}>
             Click <strong>Add Record</strong> to log your first entry.
@@ -626,24 +997,45 @@ function RepairBorrowed() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((rec, idx) => (
+                {filteredRecords.map((rec, idx) => (
                   <tr
                     key={rec.id}
                     onClick={() => openViewModal(rec)}
                     style={{ cursor: "pointer" }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "var(--bg-elevated)"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = ""}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "var(--bg-elevated)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "")
+                    }
                   >
-                    <td style={{ color: "var(--text-muted)", fontWeight: "600" }}>
+                    <td
+                      style={{ color: "var(--text-muted)", fontWeight: "600" }}
+                    >
                       {idx + 1}
                     </td>
                     <td>
-                      <span style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                        <FiMapPin size={14} style={{ color: "var(--primary)", flexShrink: 0 }} />
-                        {rec.offices?.name ?? <em style={{ color: "var(--text-muted)" }}>—</em>}
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.375rem",
+                        }}
+                      >
+                        <FiMapPin
+                          size={14}
+                          style={{ color: "var(--primary)", flexShrink: 0 }}
+                        />
+                        {rec.offices?.name ?? (
+                          <em style={{ color: "var(--text-muted)" }}>—</em>
+                        )}
                       </span>
                     </td>
-                    <td>{rec.model || <em style={{ color: "var(--text-muted)" }}>—</em>}</td>
+                    <td>
+                      {rec.model || (
+                        <em style={{ color: "var(--text-muted)" }}>—</em>
+                      )}
+                    </td>
                     <td>
                       {rec.category ? (
                         <span
@@ -654,8 +1046,14 @@ function RepairBorrowed() {
                             borderRadius: "var(--radius-md)",
                             fontSize: "0.75rem",
                             fontWeight: "700",
-                            background: rec.category === "Borrowed" ? "#eff6ff" : "#f5f3ff",
-                            color: rec.category === "Borrowed" ? "#2563eb" : "#7c3aed",
+                            background:
+                              rec.category === "Borrowed"
+                                ? "#eff6ff"
+                                : "#f5f3ff",
+                            color:
+                              rec.category === "Borrowed"
+                                ? "#2563eb"
+                                : "#7c3aed",
                             border: `1px solid ${rec.category === "Borrowed" ? "#bfdbfe" : "#ddd6fe"}`,
                           }}
                         >
@@ -667,8 +1065,20 @@ function RepairBorrowed() {
                     </td>
                     <td>
                       {rec.name ? (
-                        <span style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                          <FiUser size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.375rem",
+                          }}
+                        >
+                          <FiUser
+                            size={14}
+                            style={{
+                              color: "var(--text-muted)",
+                              flexShrink: 0,
+                            }}
+                          />
                           {rec.name}
                         </span>
                       ) : (
@@ -676,7 +1086,13 @@ function RepairBorrowed() {
                       )}
                     </td>
                     <td>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "0.375rem",
+                        }}
+                      >
                         {(rec.units || []).map((u) => (
                           <span
                             key={u.type}
@@ -723,8 +1139,10 @@ function RepairBorrowed() {
                             borderRadius: "var(--radius-md)",
                             fontSize: "0.75rem",
                             fontWeight: "700",
-                            background: rec.status === "Returned" ? "#d1fae5" : "#fef3c7",
-                            color: rec.status === "Returned" ? "#065f46" : "#92400e",
+                            background:
+                              rec.status === "Returned" ? "#d1fae5" : "#fef3c7",
+                            color:
+                              rec.status === "Returned" ? "#065f46" : "#92400e",
                             border: `1px solid ${rec.status === "Returned" ? "#6ee7b7" : "#fcd34d"}`,
                           }}
                         >
@@ -734,20 +1152,51 @@ function RepairBorrowed() {
                         <em style={{ color: "var(--text-muted)" }}>—</em>
                       )}
                     </td>
-                    <td style={{ whiteSpace: "nowrap", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
-                      {rec.date
-                        ? new Date(rec.date).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
-                        : <em style={{ color: "var(--text-muted)" }}>—</em>}
+                    <td
+                      style={{
+                        whiteSpace: "nowrap",
+                        color: "var(--text-secondary)",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {rec.date ? (
+                        new Date(rec.date).toLocaleString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      ) : (
+                        <em style={{ color: "var(--text-muted)" }}>—</em>
+                      )}
                     </td>
-                    <td style={{ whiteSpace: "nowrap", color: "var(--text-secondary)", fontSize: "0.8rem" }}>
-                      {rec.status === "Returned" && rec.returned_date
-                        ? new Date(rec.returned_date).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
-                        : <em style={{ color: "var(--text-muted)" }}>—</em>}
+                    <td
+                      style={{
+                        whiteSpace: "nowrap",
+                        color: "var(--text-secondary)",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {rec.status === "Returned" && rec.returned_date ? (
+                        new Date(rec.returned_date).toLocaleString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      ) : (
+                        <em style={{ color: "var(--text-muted)" }}>—</em>
+                      )}
                     </td>
                     <td style={{ textAlign: "right" }}>
                       <button
                         className="btn btn-small btn-danger"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(rec.id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(rec.id);
+                        }}
                       >
                         <FiTrash2 size={14} />
                         Delete
@@ -761,17 +1210,24 @@ function RepairBorrowed() {
         </div>
       )}
 
-      {/* ── Add Record Modal ── */}
+      {/* '”€'”€ Add Record Modal '”€'”€ */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div
             className="modal"
-            style={{ maxWidth: "680px" }}
+            style={{
+              maxWidth: "680px",
+              maxHeight: formData.category ? "92vh" : "480px",
+              transition: "max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="modal-header">
-              <h3 className="modal-title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <h3
+                className="modal-title"
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
                 <FiTool style={{ color: "var(--primary)" }} />
                 Add Repair / Borrowed Record
               </h3>
@@ -787,7 +1243,10 @@ function RepairBorrowed() {
             {/* Body */}
             <div className="modal-body">
               {error && (
-                <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
+                <div
+                  className="alert alert-error"
+                  style={{ marginBottom: "1rem" }}
+                >
                   <FiAlertCircle />
                   {error}
                 </div>
@@ -812,7 +1271,11 @@ function RepairBorrowed() {
                 <div className="form-group">
                   <label
                     className="form-label"
-                    style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
                   >
                     <FiTag size={15} />
                     Category
@@ -862,22 +1325,40 @@ function RepairBorrowed() {
                     ))}
                   </div>
                   {formErrors.category && (
-                    <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "0.25rem" }}>
+                    <p
+                      style={{
+                        color: "var(--danger)",
+                        fontSize: "0.8rem",
+                        marginTop: "0.25rem",
+                      }}
+                    >
                       {formErrors.category}
                     </p>
                   )}
                 </div>
-
 
                 {/* Name (optional) */}
                 <div className="form-group">
                   <label
                     className="form-label"
                     htmlFor="rb-name"
-                    style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
                   >
                     <FiUser size={15} />
-                    Name&nbsp;<span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
+                    Name&nbsp;
+                    <span
+                      style={{
+                        fontWeight: 400,
+                        color: "var(--text-muted)",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      (optional)
+                    </span>
                   </label>
                   <input
                     id="rb-name"
@@ -890,47 +1371,694 @@ function RepairBorrowed() {
                   />
                 </div>
 
-                {/* Date */}
+                {/* Date — only shown after a category is picked */}
+                {formData.category && (
+                  <div
+                    key={`date-${formData.category}`}
+                    className="form-group form-field-reveal"
+                  >
+                    <label
+                      className="form-label"
+                      htmlFor="date"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <FiCalendar size={15} /> Date & Time{" "}
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          color: "var(--text-muted)",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        (optional)
+                      </span>
+                    </label>
+                    <input
+                      id="date"
+                      name="date"
+                      type="datetime-local"
+                      className="form-input"
+                      value={formData.date}
+                      onChange={handleChange}
+                      style={{ cursor: "pointer" }}
+                    />
+                  </div>
+                )}
+
+                {/* Scanned Barcodes (Inventory Sync) */}
+                {formData.category === "Borrowed" && (
+                  <div
+                    key="scanned-borrowed"
+                    className="form-group form-field-reveal"
+                  >
+                    <label
+                      className="form-label"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <FiBox size={15} />
+                      Scanned Items
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          color: "var(--text-muted)",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        (Focus input and scan barcode)
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Click here and scan barcode..."
+                      value={addBarcode}
+                      onChange={(e) => setAddBarcode(e.target.value)}
+                      onKeyDown={handleAddBarcodeKeyDown}
+                      style={{ marginBottom: "0.5rem" }}
+                    />
+                    {borrowedWarnAdd && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          background: "#fef2f2",
+                          border: "1px solid #fecaca",
+                          borderRadius: "var(--radius-md)",
+                          padding: "0.5rem 0.75rem",
+                          marginBottom: "0.5rem",
+                          fontSize: "0.8rem",
+                          color: "#b91c1c",
+                          fontWeight: "600",
+                        }}
+                      >
+                        <FiAlertCircle size={15} style={{ flexShrink: 0 }} />
+                        {borrowedWarnAdd}
+                      </div>
+                    )}
+                    {formData.scanned_barcodes &&
+                      formData.scanned_barcodes.length > 0 && (
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          {formData.scanned_barcodes.map((code) => (
+                            <div
+                              key={code}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                background: "var(--bg-elevated)",
+                                border: "1px solid var(--border)",
+                                padding: "4px 10px",
+                                borderRadius: "12px",
+                                fontSize: "0.8rem",
+                                fontFamily: "monospace",
+                              }}
+                            >
+                              {code}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAddBarcode(code)}
+                                style={{
+                                  border: "none",
+                                  background: "none",
+                                  color: "var(--danger)",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                  display: "flex",
+                                }}
+                              >
+                                <FiX size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
+
+                {/* Model — only shown after a category is picked */}
+                {formData.category && (
+                  <div
+                    key={`model-${formData.category}`}
+                    className="form-group form-field-reveal"
+                  >
+                    <label
+                      className="form-label"
+                      htmlFor="rb-model"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <FiCpu size={15} />
+                      Model
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          color: "var(--text-muted)",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        (optional)
+                      </span>
+                    </label>
+                    <input
+                      id="rb-model"
+                      name="model"
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. HP LaserJet Pro M404n"
+                      value={formData.model}
+                      onChange={handleChange}
+                      disabled={formData.category === "Borrowed"}
+                    />
+                  </div>
+                )}
+
+                {/* Unit Types — only shown after a category is picked */}
+                {formData.category && (
+                  <div
+                    key={`units-${formData.category}`}
+                    className="form-group form-field-reveal"
+                  >
+                    <label
+                      className="form-label"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <FiTool size={15} />
+                      Unit Type
+                      <span style={{ color: "var(--danger)" }}>*</span>
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          color: "var(--text-muted)",
+                          fontSize: "0.8rem",
+                          marginLeft: "0.25rem",
+                        }}
+                      >
+                        — click to add, click again to increase qty
+                      </span>
+                    </label>
+
+                    {/* Clickable unit buttons */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "0.5rem",
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      {UNIT_TYPES.map((unit) => {
+                        const qty = selectedUnits[unit.id] || 0;
+                        const active = qty > 0;
+                        return (
+                          <button
+                            key={unit.id}
+                            type="button"
+                            disabled={formData.category === "Borrowed"}
+                            onClick={() => handleUnitClick(unit.id)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.375rem",
+                              padding: "0.45rem 0.875rem",
+                              border: `1.5px solid ${active ? "var(--primary)" : "var(--border)"}`,
+                              borderRadius: "var(--radius-md)",
+                              background: active ? "#eff6ff" : "var(--bg-card)",
+                              color: active
+                                ? "var(--primary)"
+                                : "var(--text-secondary)",
+                              fontWeight: "600",
+                              fontSize: "0.8125rem",
+                              cursor:
+                                formData.category === "Borrowed"
+                                  ? "not-allowed"
+                                  : "pointer",
+                              opacity:
+                                formData.category === "Borrowed" ? 0.45 : 1,
+                              transition: "all 0.15s ease",
+                              position: "relative",
+                            }}
+                          >
+                            {unit.icon}
+                            {unit.label}
+                            {active && (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "var(--primary)",
+                                  color: "white",
+                                  borderRadius: "9999px",
+                                  minWidth: "20px",
+                                  height: "20px",
+                                  fontSize: "0.7rem",
+                                  fontWeight: "700",
+                                  padding: "0 5px",
+                                }}
+                              >
+                                {qty}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Selected units summary with remove */}
+                    {Object.keys(selectedUnits).length > 0 && (
+                      <div
+                        style={{
+                          background: "var(--bg-elevated)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "0.75rem",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "0.5rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "var(--text-muted)",
+                            width: "100%",
+                            marginBottom: "0.25rem",
+                            fontWeight: "600",
+                          }}
+                        >
+                          Selected units:
+                        </span>
+                        {Object.entries(selectedUnits).map(([id, qty]) => (
+                          <div
+                            key={id}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.375rem",
+                              background: "white",
+                              border: "1.5px solid var(--primary)",
+                              borderRadius: "var(--radius-md)",
+                              padding: "0.3rem 0.625rem",
+                              fontSize: "0.8125rem",
+                              fontWeight: "600",
+                              color: "var(--primary)",
+                            }}
+                          >
+                            <span>{unitLabel(id)}</span>
+                            <span
+                              style={{
+                                background: "var(--primary)",
+                                color: "white",
+                                borderRadius: "9999px",
+                                padding: "0 6px",
+                                fontSize: "0.7rem",
+                                fontWeight: "700",
+                              }}
+                            >
+                              ×{qty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleUnitRemove(id)}
+                              title="Decrease / remove"
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                color: "var(--danger)",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                padding: 0,
+                                lineHeight: 1,
+                              }}
+                            >
+                              <FiX size={13} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {formErrors.units && (
+                      <p
+                        style={{
+                          color: "var(--danger)",
+                          fontSize: "0.8rem",
+                          marginTop: "0.25rem",
+                        }}
+                      >
+                        {formErrors.units}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Description — only shown after a category is picked */}
+                {formData.category && (
+                  <div
+                    key={`desc-${formData.category}`}
+                    className="form-group form-field-reveal"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <label
+                      className="form-label"
+                      htmlFor="rb-description"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <FiAlertCircle size={15} />
+                      Description
+                      <span
+                        style={{
+                          fontWeight: 400,
+                          color: "var(--text-muted)",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        (optional)
+                      </span>
+                    </label>
+                    <textarea
+                      id="rb-description"
+                      name="description"
+                      className="form-textarea"
+                      placeholder="Describe the issue, purpose for borrowing, etc."
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={4}
+                    />
+                  </div>
+                )}
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="modal-footer">
+              <button
+                className="btn btn-ghost"
+                onClick={closeModal}
+                disabled={submitting}
+              >
+                <FiX size={16} />
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="rb-form"
+                className="btn btn-primary"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <div
+                      className="spinner"
+                      style={{ width: "16px", height: "16px" }}
+                    />
+                    Saving'€¦
+                  </>
+                ) : (
+                  <>
+                    <FiCheckCircle size={16} />
+                    Save Record
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* '”€'”€ View / Edit Modal '”€'”€ */}
+      {viewRecord && (
+        <div className="modal-overlay" onClick={closeViewModal}>
+          <div
+            className="modal"
+            style={{ maxWidth: "680px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="modal-header">
+              <h3
+                className="modal-title"
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                <FiEdit2 style={{ color: "var(--primary)" }} />
+                View / Edit Record
+              </h3>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                }}
+              >
+                {/* Category badge */}
+                {editData.category && (
+                  <span
+                    style={{
+                      padding: "0.35rem 1rem",
+                      borderRadius: "var(--radius-md)",
+                      fontWeight: "800",
+                      fontSize: "0.9rem",
+                      background:
+                        editData.category === "Borrowed"
+                          ? "#fef3c7"
+                          : "#fef3c7",
+                      color:
+                        editData.category === "Borrowed"
+                          ? "#92400e"
+                          : "#92400e",
+                      border: `2px solid ${editData.category === "Borrowed" ? "#f59e0b" : "#f59e0b"}`,
+                    }}
+                  >
+                    {editData.category}
+                  </span>
+                )}
+                <button
+                  className="btn btn-icon btn-ghost"
+                  onClick={closeViewModal}
+                  style={{ width: "36px", height: "36px" }}
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="modal-body">
+              {editError && (
+                <div
+                  className="alert alert-error"
+                  style={{ marginBottom: "1rem" }}
+                >
+                  <FiAlertCircle />
+                  {editError}
+                </div>
+              )}
+
+              <form id="edit-rb-form" onSubmit={(e) => e.preventDefault()}>
+                {/* Office */}
+                <SearchableSelect
+                  label="Office"
+                  name="officeId"
+                  icon={FiMapPin}
+                  options={offices}
+                  value={editData.officeId}
+                  onChange={handleEditChange}
+                  placeholder="Select an office"
+                  modal
+                />
+
+                {/* Status */}
+                {editData.category && (
+                  <div className="form-group">
+                    <label
+                      className="form-label"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <FiCheckCircle size={15} /> Status
+                    </label>
+                    <div style={{ display: "flex", gap: "0.75rem" }}>
+                      {(editData.category === "Borrowed"
+                        ? ["Borrowed", "Returned"]
+                        : ["Repairing", "Returned"]
+                      ).map((st) => {
+                        const isActive = editData.status === st;
+                        const isReturned = st === "Returned";
+                        return (
+                          <button
+                            key={st}
+                            type="button"
+                            onClick={() => {
+                              if (editData.status !== st) {
+                                setStatusConfirmModal(st);
+                              }
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: "0.6rem 1rem",
+                              border: `2px solid ${isActive ? (isReturned ? "#10b981" : "#f59e0b") : "var(--border)"}`,
+                              borderRadius: "var(--radius-md)",
+                              background: isActive
+                                ? isReturned
+                                  ? "#d1fae5"
+                                  : "#fef3c7"
+                                : "var(--bg-card)",
+                              color: isActive
+                                ? isReturned
+                                  ? "#065f46"
+                                  : "#92400e"
+                                : "var(--text-secondary)",
+                              fontWeight: "700",
+                              fontSize: "0.875rem",
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {st}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Name */}
                 <div className="form-group">
-                  <label className="form-label" htmlFor="date" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiCalendar size={15} /> Date & Time <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
+                  <label
+                    className="form-label"
+                    htmlFor="edit-name"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <FiUser size={15} /> Name{" "}
+                    <span
+                      style={{
+                        fontWeight: 400,
+                        color: "var(--text-muted)",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      (optional)
+                    </span>
                   </label>
                   <input
-                    id="date"
+                    id="edit-name"
+                    name="name"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Juan Dela Cruz"
+                    value={editData.name || ""}
+                    onChange={handleEditChange}
+                  />
+                </div>
+
+                {/* Date */}
+                <div className="form-group">
+                  <label
+                    className="form-label"
+                    htmlFor="edit-date"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <FiCalendar size={15} /> Date & Time{" "}
+                    <span
+                      style={{
+                        fontWeight: 400,
+                        color: "var(--text-muted)",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      (optional)
+                    </span>
+                  </label>
+                  <input
+                    id="edit-date"
                     name="date"
                     type="datetime-local"
                     className="form-input"
-                    value={formData.date}
-                    onChange={handleChange}
+                    value={
+                      editData.date
+                        ? new Date(editData.date).toISOString().slice(0, 16)
+                        : ""
+                    }
+                    onChange={handleEditChange}
                     style={{ cursor: "pointer" }}
                   />
                 </div>
 
                 {/* Unit Types */}
-
                 <div className="form-group">
                   <label
                     className="form-label"
-                    style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
                   >
-                    <FiTool size={15} />
-                    Unit Type
-                    <span style={{ color: "var(--danger)" }}>*</span>
-                    <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem", marginLeft: "0.25rem" }}>
-                      — click to add, click again to increase qty
+                    <FiTool size={15} /> Unit Types
+                    <span
+                      style={{
+                        fontWeight: 400,
+                        color: "var(--text-muted)",
+                        fontSize: "0.8rem",
+                        marginLeft: "0.25rem",
+                      }}
+                    >
+                      — click to add, × to decrease
                     </span>
                   </label>
-
-                  {/* Clickable unit buttons */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "0.5rem",
+                      marginBottom: "0.75rem",
+                    }}
+                  >
                     {UNIT_TYPES.map((unit) => {
-                      const qty = selectedUnits[unit.id] || 0;
+                      const qty = editUnits[unit.id] || 0;
                       const active = qty > 0;
                       return (
                         <button
                           key={unit.id}
                           type="button"
-                          onClick={() => handleUnitClick(unit.id)}
+                          onClick={() => handleEditUnitClick(unit.id)}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -939,12 +2067,13 @@ function RepairBorrowed() {
                             border: `1.5px solid ${active ? "var(--primary)" : "var(--border)"}`,
                             borderRadius: "var(--radius-md)",
                             background: active ? "#eff6ff" : "var(--bg-card)",
-                            color: active ? "var(--primary)" : "var(--text-secondary)",
+                            color: active
+                              ? "var(--primary)"
+                              : "var(--text-secondary)",
                             fontWeight: "600",
                             fontSize: "0.8125rem",
                             cursor: "pointer",
                             transition: "all 0.15s ease",
-                            position: "relative",
                           }}
                         >
                           {unit.icon}
@@ -972,9 +2101,7 @@ function RepairBorrowed() {
                       );
                     })}
                   </div>
-
-                  {/* Selected units summary with remove */}
-                  {Object.keys(selectedUnits).length > 0 && (
+                  {Object.keys(editUnits).length > 0 && (
                     <div
                       style={{
                         background: "var(--bg-elevated)",
@@ -986,10 +2113,18 @@ function RepairBorrowed() {
                         gap: "0.5rem",
                       }}
                     >
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", width: "100%", marginBottom: "0.25rem", fontWeight: "600" }}>
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "var(--text-muted)",
+                          width: "100%",
+                          marginBottom: "0.25rem",
+                          fontWeight: "600",
+                        }}
+                      >
                         Selected units:
                       </span>
-                      {Object.entries(selectedUnits).map(([id, qty]) => (
+                      {Object.entries(editUnits).map(([id, qty]) => (
                         <div
                           key={id}
                           style={{
@@ -1016,12 +2151,11 @@ function RepairBorrowed() {
                               fontWeight: "700",
                             }}
                           >
-                            ×{qty}
+                            —{qty}
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleUnitRemove(id)}
-                            title="Decrease / remove"
+                            onClick={() => handleEditUnitRemove(id)}
                             style={{
                               border: "none",
                               background: "transparent",
@@ -1039,296 +2173,20 @@ function RepairBorrowed() {
                       ))}
                     </div>
                   )}
-
-                  {formErrors.units && (
-                    <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "0.25rem" }}>
-                      {formErrors.units}
-                    </p>
-                  )}
-                </div>
-
-                {/* Scanned Barcodes (Inventory Sync) */}
-                {formData.category === "Borrowed" && (
-                  <div className="form-group">
-                    <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <FiBox size={15} /> 
-                      Scanned Items
-                      <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>
-                        (Focus input and scan barcode)
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Click here and scan barcode..."
-                      value={addBarcode}
-                      onChange={(e) => setAddBarcode(e.target.value)}
-                      onKeyDown={handleAddBarcodeKeyDown}
-                      style={{ marginBottom: "0.5rem" }}
-                    />
-                    {formData.scanned_barcodes && formData.scanned_barcodes.length > 0 && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                        {formData.scanned_barcodes.map(code => (
-                          <div key={code} style={{ 
-                            display: "flex", alignItems: "center", gap: "0.25rem", 
-                            background: "var(--bg-elevated)", border: "1px solid var(--border)", 
-                            padding: "4px 10px", borderRadius: "12px", fontSize: "0.8rem", fontFamily: "monospace"
-                          }}>
-                            {code}
-                            <button type="button" onClick={() => handleRemoveAddBarcode(code)} style={{ border: "none", background: "none", color: "var(--danger)", cursor: "pointer", padding: 0, display: "flex" }}>
-                              <FiX size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Model */}
-                <div className="form-group">
-                  <label
-                    className="form-label"
-                    htmlFor="rb-model"
-                    style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-                  >
-                    <FiCpu size={15} />
-                    Model
-                    <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
-                  </label>
-                  <input
-                    id="rb-model"
-                    name="model"
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. HP LaserJet Pro M404n"
-                    value={formData.model}
-                    onChange={handleChange}
-                    disabled={formData.category === "Borrowed"}
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label
-                    className="form-label"
-                    htmlFor="rb-description"
-                    style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-                  >
-                    <FiAlertCircle size={15} />
-                    Description
-                    <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
-                  </label>
-                  <textarea
-                    id="rb-description"
-                    name="description"
-                    className="form-textarea"
-                    placeholder="Describe the issue, purpose for borrowing, etc."
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                  />
-                </div>
-              </form>
-            </div>
-
-            {/* Footer */}
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={closeModal} disabled={submitting}>
-                <FiX size={16} />
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="rb-form"
-                className="btn btn-primary"
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <>
-                    <div className="spinner" style={{ width: "16px", height: "16px" }} />
-                    Saving…
-                  </>
-                ) : (
-                  <>
-                    <FiCheckCircle size={16} />
-                    Save Record
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* ── View / Edit Modal ── */}
-      {viewRecord && (
-        <div className="modal-overlay" onClick={closeViewModal}>
-          <div
-            className="modal"
-            style={{ maxWidth: "680px" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="modal-header">
-              <h3 className="modal-title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FiEdit2 style={{ color: "var(--primary)" }} />
-                View / Edit Record
-              </h3>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                {/* Category badge */}
-                {editData.category && (
-                  <span style={{
-                    padding: "0.35rem 1rem",
-                    borderRadius: "var(--radius-md)",
-                    fontWeight: "800",
-                    fontSize: "0.9rem",
-                    background: editData.category === "Borrowed" ? "#fef3c7" : "#fef3c7",
-                    color: editData.category === "Borrowed" ? "#92400e" : "#92400e",
-                    border: `2px solid ${editData.category === "Borrowed" ? "#f59e0b" : "#f59e0b"}`,
-                  }}>
-                    {editData.category}
-                  </span>
-                )}
-                <button className="btn btn-icon btn-ghost" onClick={closeViewModal} style={{ width: "36px", height: "36px" }}>
-                  <FiX size={20} />
-                </button>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="modal-body">
-              {editError && (
-                <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
-                  <FiAlertCircle />
-                  {editError}
-                </div>
-              )}
-
-              <form id="edit-rb-form" onSubmit={(e) => e.preventDefault()}>
-
-                {/* Office */}
-                <SearchableSelect
-                  label="Office"
-                  name="officeId"
-                  icon={FiMapPin}
-                  options={offices}
-                  value={editData.officeId}
-                  onChange={handleEditChange}
-                  placeholder="Select an office"
-                  modal
-                />
-
-                {/* Status */}
-                {editData.category && (
-                  <div className="form-group">
-                    <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <FiCheckCircle size={15} /> Status
-                    </label>
-                    <div style={{ display: "flex", gap: "0.75rem" }}>
-                      {(editData.category === "Borrowed" ? ["Borrowed", "Returned"] : ["Repairing", "Returned"]).map((st) => {
-                        const isActive = editData.status === st;
-                        const isReturned = st === "Returned";
-                        return (
-                          <button key={st} type="button"
-                            onClick={() => {
-                              if (editData.status !== st) {
-                                setStatusConfirmModal(st);
-                              }
-                            }}
-                            style={{
-                              flex: 1, padding: "0.6rem 1rem",
-                              border: `2px solid ${isActive ? (isReturned ? "#10b981" : "#f59e0b") : "var(--border)"}`,
-                              borderRadius: "var(--radius-md)",
-                              background: isActive ? (isReturned ? "#d1fae5" : "#fef3c7") : "var(--bg-card)",
-                              color: isActive ? (isReturned ? "#065f46" : "#92400e") : "var(--text-secondary)",
-                              fontWeight: "700", fontSize: "0.875rem", cursor: "pointer", transition: "all 0.15s ease",
-                            }}
-                          >{st}</button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Name */}
-                <div className="form-group">
-                  <label className="form-label" htmlFor="edit-name" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiUser size={15} /> Name <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
-                  </label>
-                  <input id="edit-name" name="name" type="text" className="form-input"
-                    placeholder="e.g. Juan Dela Cruz" value={editData.name || ""} onChange={handleEditChange} />
-                </div>
-
-                {/* Date */}
-                <div className="form-group">
-                  <label className="form-label" htmlFor="edit-date" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiCalendar size={15} /> Date & Time <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
-                  </label>
-                  <input id="edit-date" name="date" type="datetime-local" className="form-input"
-                    value={editData.date ? new Date(editData.date).toISOString().slice(0, 16) : ""} onChange={handleEditChange} style={{ cursor: "pointer" }} />
-                </div>
-
-                {/* Unit Types */}
-                <div className="form-group">
-                  <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiTool size={15} /> Unit Types
-                    <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem", marginLeft: "0.25rem" }}>— click to add, × to decrease</span>
-                  </label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
-                    {UNIT_TYPES.map((unit) => {
-                      const qty = editUnits[unit.id] || 0;
-                      const active = qty > 0;
-                      return (
-                        <button key={unit.id} type="button" onClick={() => handleEditUnitClick(unit.id)}
-                          style={{
-                            display: "inline-flex", alignItems: "center", gap: "0.375rem",
-                            padding: "0.45rem 0.875rem",
-                            border: `1.5px solid ${active ? "var(--primary)" : "var(--border)"}`,
-                            borderRadius: "var(--radius-md)",
-                            background: active ? "#eff6ff" : "var(--bg-card)",
-                            color: active ? "var(--primary)" : "var(--text-secondary)",
-                            fontWeight: "600", fontSize: "0.8125rem", cursor: "pointer", transition: "all 0.15s ease",
-                          }}
-                        >
-                          {unit.icon}{unit.label}
-                          {active && (
-                            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center",
-                              background: "var(--primary)", color: "white", borderRadius: "9999px",
-                              minWidth: "20px", height: "20px", fontSize: "0.7rem", fontWeight: "700", padding: "0 5px" }}>
-                              {qty}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {Object.keys(editUnits).length > 0 && (
-                    <div style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)",
-                      borderRadius: "var(--radius-md)", padding: "0.75rem", display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", width: "100%", marginBottom: "0.25rem", fontWeight: "600" }}>Selected units:</span>
-                      {Object.entries(editUnits).map(([id, qty]) => (
-                        <div key={id} style={{ display: "inline-flex", alignItems: "center", gap: "0.375rem",
-                          background: "white", border: "1.5px solid var(--primary)", borderRadius: "var(--radius-md)",
-                          padding: "0.3rem 0.625rem", fontSize: "0.8125rem", fontWeight: "600", color: "var(--primary)" }}>
-                          <span>{unitLabel(id)}</span>
-                          <span style={{ background: "var(--primary)", color: "white", borderRadius: "9999px",
-                            padding: "0 6px", fontSize: "0.7rem", fontWeight: "700" }}>×{qty}</span>
-                          <button type="button" onClick={() => handleEditUnitRemove(id)}
-                            style={{ border: "none", background: "transparent", color: "var(--danger)",
-                              cursor: "pointer", display: "flex", alignItems: "center", padding: 0, lineHeight: 1 }}>
-                            <FiX size={13} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Scanned Barcodes (Inventory Sync) */}
                 {editData.category === "Borrowed" && (
                   <div className="form-group">
-                    <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <FiBox size={15} /> 
+                    <label
+                      className="form-label"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                      }}
+                    >
+                      <FiBox size={15} />
                       Scanned Items
                     </label>
                     <input
@@ -1340,56 +2198,182 @@ function RepairBorrowed() {
                       onKeyDown={handleEditBarcodeKeyDown}
                       style={{ marginBottom: "0.5rem" }}
                     />
-                    {editData.scanned_barcodes && editData.scanned_barcodes.length > 0 && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                        {editData.scanned_barcodes.map(code => (
-                          <div key={code} style={{ 
-                            display: "flex", alignItems: "center", gap: "0.25rem", 
-                            background: "white", border: "1px solid var(--border)", 
-                            padding: "4px 10px", borderRadius: "12px", fontSize: "0.8rem", fontFamily: "monospace",
-                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
-                          }}>
-                            {code}
-                            <button type="button" onClick={() => handleRemoveEditBarcode(code)} style={{ border: "none", background: "none", color: "var(--danger)", cursor: "pointer", padding: 0, display: "flex" }}>
-                              <FiX size={14} />
-                            </button>
-                          </div>
-                        ))}
+                    {borrowedWarnEdit && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          background: "#fef2f2",
+                          border: "1px solid #fecaca",
+                          borderRadius: "var(--radius-md)",
+                          padding: "0.5rem 0.75rem",
+                          marginBottom: "0.5rem",
+                          fontSize: "0.8rem",
+                          color: "#b91c1c",
+                          fontWeight: "600",
+                        }}
+                      >
+                        <FiAlertCircle size={15} style={{ flexShrink: 0 }} />
+                        {borrowedWarnEdit}
                       </div>
                     )}
+                    {editData.scanned_barcodes &&
+                      editData.scanned_barcodes.length > 0 && (
+                        <div
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: "0.5rem",
+                          }}
+                        >
+                          {editData.scanned_barcodes.map((code) => (
+                            <div
+                              key={code}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                background: "white",
+                                border: "1px solid var(--border)",
+                                padding: "4px 10px",
+                                borderRadius: "12px",
+                                fontSize: "0.8rem",
+                                fontFamily: "monospace",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                              }}
+                            >
+                              {code}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveEditBarcode(code)}
+                                style={{
+                                  border: "none",
+                                  background: "none",
+                                  color: "var(--danger)",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                  display: "flex",
+                                }}
+                              >
+                                <FiX size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                   </div>
                 )}
 
                 {/* Model */}
                 <div className="form-group">
-                  <label className="form-label" htmlFor="edit-model" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiCpu size={15} /> Model <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
+                  <label
+                    className="form-label"
+                    htmlFor="edit-model"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <FiCpu size={15} /> Model{" "}
+                    <span
+                      style={{
+                        fontWeight: 400,
+                        color: "var(--text-muted)",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      (optional)
+                    </span>
                   </label>
-                  <input id="edit-model" name="model" type="text" className="form-input"
-                    placeholder="e.g. HP LaserJet Pro M404n" value={editData.model || ""} onChange={handleEditChange} 
-                    disabled={editData.category === "Borrowed"}/>
+                  <input
+                    id="edit-model"
+                    name="model"
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. HP LaserJet Pro M404n"
+                    value={editData.model || ""}
+                    onChange={handleEditChange}
+                    disabled={editData.category === "Borrowed"}
+                  />
                 </div>
 
                 {/* Description */}
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label" htmlFor="edit-description" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiAlertCircle size={15} /> Description <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.8rem" }}>(optional)</span>
+                  <label
+                    className="form-label"
+                    htmlFor="edit-description"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                    }}
+                  >
+                    <FiAlertCircle size={15} /> Description{" "}
+                    <span
+                      style={{
+                        fontWeight: 400,
+                        color: "var(--text-muted)",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      (optional)
+                    </span>
                   </label>
-                  <textarea id="edit-description" name="description" className="form-textarea" rows={3}
-                    placeholder="Describe the issue or purpose..." value={editData.description || ""} onChange={handleEditChange} />
+                  <textarea
+                    id="edit-description"
+                    name="description"
+                    className="form-textarea"
+                    rows={3}
+                    placeholder="Describe the issue or purpose..."
+                    value={editData.description || ""}
+                    onChange={handleEditChange}
+                  />
                 </div>
-
               </form>
             </div>
 
             {/* Footer */}
-            <div className="modal-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div
+              className="modal-footer"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text-muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
                 {editSaving && (
-                  <><div className="spinner" style={{ width: "14px", height: "14px" }} /> <span style={{ color: "var(--primary)", fontWeight: "600" }}>Saving...</span></>
+                  <>
+                    <div
+                      className="spinner"
+                      style={{ width: "14px", height: "14px" }}
+                    />{" "}
+                    <span
+                      style={{ color: "var(--primary)", fontWeight: "600" }}
+                    >
+                      Saving...
+                    </span>
+                  </>
                 )}
                 {!editSaving && lastSaved && (
-                  <><FiCheckCircle style={{ color: "var(--success)" }} /> <span style={{ color: "var(--success)", fontWeight: "600" }}>All changes saved</span></>
+                  <>
+                    <FiCheckCircle style={{ color: "var(--success)" }} />{" "}
+                    <span
+                      style={{ color: "var(--success)", fontWeight: "600" }}
+                    >
+                      All changes saved
+                    </span>
+                  </>
                 )}
                 {!editSaving && !lastSaved && !editDirty && (
                   <span>No changes</span>
@@ -1405,26 +2389,87 @@ function RepairBorrowed() {
 
       {/* ── Status Change Confirmation Modal ── */}
       {statusConfirmModal && (
-        <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setStatusConfirmModal(null)}>
-          <div className="modal" style={{ maxWidth: "400px", padding: "1.5rem" }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "1rem" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "0.5rem" }}>
+        <div
+          className="modal-overlay"
+          style={{ zIndex: 1000 }}
+          onClick={() => setStatusConfirmModal(null)}
+        >
+          <div
+            className="modal"
+            style={{ maxWidth: "400px", padding: "1.5rem" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                gap: "1rem",
+              }}
+            >
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  background: "#fef3c7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: "0.5rem",
+                }}
+              >
                 <FiAlertCircle size={32} style={{ color: "#d97706" }} />
               </div>
-              <h3 style={{ margin: 0, fontSize: "1.25rem", color: "var(--text-primary)" }}>Confirm Status Change</h3>
-              <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.5 }}>
-                Are you sure you want to change the status to <strong style={{ color: "var(--primary)" }}>{statusConfirmModal}</strong>? This will be saved automatically.
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "1.25rem",
+                  color: "var(--text-primary)",
+                }}
+              >
+                Confirm Status Change
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  color: "var(--text-secondary)",
+                  fontSize: "0.95rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                Are you sure you want to change the status to{" "}
+                <strong style={{ color: "var(--primary)" }}>
+                  {statusConfirmModal}
+                </strong>
+                ? This will be saved automatically.
               </p>
-              <div style={{ display: "flex", gap: "0.75rem", width: "100%", marginTop: "1rem" }}>
-                <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setStatusConfirmModal(null)}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.75rem",
+                  width: "100%",
+                  marginTop: "1rem",
+                }}
+              >
+                <button
+                  className="btn btn-outline"
+                  style={{ flex: 1 }}
+                  onClick={() => setStatusConfirmModal(null)}
+                >
                   Cancel
                 </button>
-                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
-                  setEditData((p) => ({ ...p, status: statusConfirmModal }));
-                  setEditDirty(true);
-                  setLastSaved(null);
-                  setStatusConfirmModal(null);
-                }}>
+                <button
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    setEditData((p) => ({ ...p, status: statusConfirmModal }));
+                    setEditDirty(true);
+                    setLastSaved(null);
+                    setStatusConfirmModal(null);
+                  }}
+                >
                   Yes, Change Status
                 </button>
               </div>
