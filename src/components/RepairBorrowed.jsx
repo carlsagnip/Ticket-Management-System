@@ -647,7 +647,7 @@ function RepairBorrowed() {
               const matchedUnit =
                 UNIT_TYPES.find(
                   (u) => u.label.toLowerCase() === categoryName.toLowerCase(),
-                ) || UNIT_TYPES.find((u) => u.id === "others");
+                ) || UNIT_TYPES.find((u) => u.id === "other");
 
               if (matchedUnit) {
                 matchedUnitId = matchedUnit.id;
@@ -753,7 +753,7 @@ function RepairBorrowed() {
               const matchedUnit =
                 UNIT_TYPES.find(
                   (u) => u.label.toLowerCase() === categoryName.toLowerCase(),
-                ) || UNIT_TYPES.find((u) => u.id === "others");
+                ) || UNIT_TYPES.find((u) => u.id === "other");
 
               if (matchedUnit) {
                 const unitId = matchedUnit.id;
