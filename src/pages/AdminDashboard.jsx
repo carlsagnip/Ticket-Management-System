@@ -1,480 +1,433 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import TicketList from "../components/TicketList";
-import ManageOffices from "../components/ManageOffices";
-import ManageCategories from "../components/ManageCategories";
 import RepairBorrowed from "../components/RepairBorrowed";
 import Inventory from "../components/Inventory";
+import Settings from "../components/Settings";
 import {
   FiLogOut,
   FiFileText,
-  FiMapPin,
-  FiTag,
-  FiGrid,
-  FiMenu,
-  FiX,
   FiTool,
   FiBox,
+  FiChevronLeft,
+  FiChevronRight,
+  FiSettings,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
 
 function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("tickets");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/admin/login");
   };
 
+  // Close mobile menu when active tab changes
+  useEffect(() => {
+    setShowMobileMenu(false);
+  }, [activeTab]);
+
+  const navItems = [
+    { id: "tickets", label: "Tickets", icon: <FiFileText size={18} /> },
+    {
+      id: "repairBorrowed",
+      label: "Repair/Borrowed",
+      icon: <FiTool size={18} />,
+    },
+    { id: "inventory", label: "Inventory", icon: <FiBox size={18} /> },
+  ];
+
   return (
-    <div
-      className="page-container"
-      style={{
-        minHeight: "100vh",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Navigation Bar */}
-      <div
-        className="admin-navbar"
-        style={{
-          background: "white",
-          borderBottom: "1px solid var(--border)",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          padding: "0.5rem 1rem",
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        .admin-layout {
+          display: flex;
+          height: 100vh;
+          width: 100vw;
+          overflow: hidden;
+          background-color: var(--bg-dark);
+        }
+        .admin-sidebar {
+          width: 260px;
+          background: white;
+          border-right: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          z-index: 50;
+          transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .admin-sidebar.minimized {
+          width: 80px;
+        }
+        
+        /* Smooth text hide/show */
+        .sidebar-text {
+          white-space: nowrap;
+          overflow: hidden;
+          opacity: 1;
+          transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .admin-sidebar.minimized .sidebar-text {
+          width: 0;
+          opacity: 0;
+          pointer-events: none;
+        }
+        .admin-main-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          position: relative;
+        }
+        .admin-mobile-header {
+          display: none;
+          background: white;
+          border-bottom: 1px solid var(--border);
+          padding: 1rem;
+          align-items: center;
+          justify-content: space-between;
+          z-index: 40;
+          box-shadow: var(--shadow-sm);
+        }
+        .admin-sidebar-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 45;
+          backdrop-filter: blur(2px);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .admin-sidebar-overlay.mobile-open {
+          display: block;
+          opacity: 1;
+        }
+        
+        .main-scroll-area {
+          flex: 1;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .nav-button {
+          width: 100%;
+          padding: 0.875rem 1.25rem;
+          border: none;
+          background: transparent;
+          color: var(--text-secondary);
+          text-align: left;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.875rem;
+          font-size: 0.9rem;
+          font-weight: 500;
+          transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          border-left: 3px solid transparent;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        .nav-button svg {
+          flex-shrink: 0;
+          transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-button:hover:not(.active) {
+          background: var(--bg-elevated);
+          color: var(--text-primary);
+        }
+        .nav-button.active {
+          background: var(--bg-elevated);
+          color: var(--primary);
+          border-left-color: var(--primary);
+          font-weight: 600;
+        }
+        .admin-sidebar.minimized .nav-button {
+          padding-left: 1.7rem; /* Centers the icon perfectly with scale */
+        }
+        .admin-sidebar.minimized .nav-button svg {
+          transform: scale(1.3);
+        }
+
+        @media (max-width: 1024px) {
+          .admin-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            transform: translateX(-100%);
+          }
+          .admin-sidebar.mobile-open {
+            transform: translateX(0);
+          }
+          .admin-mobile-header {
+            display: flex;
+          }
+          .admin-layout {
+            flex-direction: column;
+          }
+        }
+      `,
         }}
-      >
+      />
+      <div className="admin-layout">
+        {/* Mobile Overlay */}
         <div
-          className="admin-navbar-content"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "0.75rem",
-          }}
+          className={`admin-sidebar-overlay ${showMobileMenu ? "mobile-open" : ""}`}
+          onClick={() => setShowMobileMenu(false)}
+        />
+
+        {/* Sidebar */}
+        <div
+          className={`admin-sidebar ${showMobileMenu ? "mobile-open" : ""} ${isSidebarMinimized ? "minimized" : ""}`}
         >
-          {/* Left: Branding - clickable on mobile to toggle menu */}
+          {/* Branding */}
           <div
-            className="admin-branding-wrapper"
             style={{
-              position: "relative",
-              flex: 1,
+              padding: "1.5rem 1.25rem",
+              borderBottom: "1px solid var(--border)",
               display: "flex",
-              justifyContent: "flex-start",
+              alignItems: "center",
+              gap: "0.75rem",
+              position: "relative",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <img
+              src="/logo.jpg"
+              alt="Palayan City ICT Logo"
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "var(--radius-md)",
+                objectFit: "cover",
+                flexShrink: 0,
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              }}
+            />
+            <div
+              className="admin-branding-text sidebar-text"
+              style={{ flex: 1 }}
+            >
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "1.05rem",
+                  fontWeight: "700",
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Palayan City ICT
+              </h1>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "0.75rem",
+                  color: "var(--text-secondary)",
+                  fontWeight: "500",
+                }}
+              >
+                Admin Dashboard
+              </p>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <div
+            style={{
+              flex: 1,
+              padding: "1.5rem 0",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.25rem",
             }}
           >
             <div
-              className="admin-branding"
-              onClick={() => {
-                // Only toggle menu on tablet/mobile (when nav is hidden)
-                if (window.innerWidth <= 1024) {
-                  setShowMobileMenu(!showMobileMenu);
-                }
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-              }}
+              className="sidebar-text"
+              style={{ padding: "0 1.25rem", marginBottom: "0.5rem" }}
             >
-              <div
+              <span
                 style={{
-                  width: "36px",
-                  height: "36px",
-                  background: "var(--primary)",
-                  borderRadius: "var(--radius-md)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  fontSize: "0.7rem",
+                  fontWeight: "700",
+                  color: "var(--text-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
                 }}
               >
-                <FiGrid
-                  style={{ width: "20px", height: "20px", color: "white" }}
-                />
-              </div>
-              <div className="admin-branding-text">
+                Main Menu
+              </span>
+            </div>
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                className={`nav-button ${activeTab === item.id ? "active" : ""}`}
+                onClick={() => setActiveTab(item.id)}
+                title={isSidebarMinimized ? item.label : undefined}
+              >
+                {item.icon}
+                <span className="sidebar-text">{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* User & Logout section */}
+          <div
+            style={{
+              padding: "1.5rem 0",
+              borderTop: "1px solid var(--border)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.5rem",
+            }}
+          >
+            {/* Settings Button */}
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`nav-button ${activeTab === "settings" ? "active" : ""}`}
+              title={isSidebarMinimized ? "Settings" : undefined}
+            >
+              <FiSettings size={18} />
+              <span className="sidebar-text">Settings</span>
+            </button>
+
+            {/* Toggle Sidebar Button */}
+            <button
+              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+              className="nav-button"
+              title={isSidebarMinimized ? "Expand Menu" : "Collapse Menu"}
+            >
+              <FiChevronLeft
+                size={20}
+                style={{
+                  transform: isSidebarMinimized
+                    ? "rotate(180deg) scale(1.3)"
+                    : "rotate(0) scale(1)",
+                  transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              />
+              <span className="sidebar-text">Collapse Menu</span>
+            </button>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="nav-button"
+              title="Logout"
+            >
+              <FiLogOut size={18} />
+              <span className="sidebar-text">Logout</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="admin-main-content">
+          {/* Mobile Header */}
+          <div className="admin-mobile-header">
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
+            >
+              <img
+                src="/logo.jpg"
+                alt="Logo"
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "var(--radius-md)",
+                  objectFit: "cover",
+                }}
+              />
+              <div>
                 <h1
                   style={{
                     margin: 0,
                     fontSize: "1rem",
                     fontWeight: "700",
                     color: "var(--text-primary)",
-                    letterSpacing: "-0.01em",
-                    whiteSpace: "nowrap",
                   }}
                 >
-                  Palayan City ICT Division System
+                  ICT Dashboard
                 </h1>
-                <p
-                  className="admin-subtitle"
-                  style={{
-                    margin: 0,
-                    fontSize: "0.7rem",
-                    color: "var(--text-secondary)",
-                    fontWeight: "500",
-                  }}
-                >
-                  Admin Dashboard
-                </p>
               </div>
             </div>
+            <button
+              className="btn btn-icon btn-ghost"
+              onClick={() => setShowMobileMenu(true)}
+            >
+              <FiMenu size={24} />
+            </button>
+          </div>
 
-            {/* Mobile Dropdown Menu - under branding */}
-            {showMobileMenu && (
+          {/* Scrolling Content Area */}
+          <div className="main-scroll-area">
+            <div
+              style={{
+                padding: "2rem",
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
               <div
-                className="admin-branding-dropdown"
                 style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  marginTop: "0.5rem",
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "var(--shadow-lg)",
-                  zIndex: 100,
-                  minWidth: "200px",
-                  overflow: "hidden",
+                  marginBottom: "1.5rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
                 }}
               >
-                {[
-                  {
-                    id: "tickets",
-                    label: "Tickets",
-                    icon: <FiFileText size={16} />,
-                  },
-                  {
-                    id: "offices",
-                    label: "Offices",
-                    icon: <FiMapPin size={16} />,
-                  },
-                  {
-                    id: "categories",
-                    label: "Categories",
-                    icon: <FiTag size={16} />,
-                  },
-                  {
-                    id: "repairBorrowed",
-                    label: "Repair/Borrowed",
-                    icon: <FiTool size={16} />,
-                  },
-                  {
-                    id: "inventory",
-                    label: "Inventory",
-                    icon: <FiBox size={16} />,
-                  },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setShowMobileMenu(false);
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      border: "none",
-                      background:
-                        activeTab === item.id
-                          ? "var(--primary)"
-                          : "transparent",
-                      color:
-                        activeTab === item.id ? "white" : "var(--text-primary)",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.75rem",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (activeTab !== item.id) {
-                        e.target.style.background = "var(--bg-elevated)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (activeTab !== item.id) {
-                        e.target.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </button>
-                ))}
-
-                {/* Divider */}
                 <div
                   style={{
-                    height: "1px",
-                    background: "var(--border)",
-                    margin: "0.25rem 0",
-                  }}
-                />
-
-                {/* Logout in mobile menu */}
-                <button
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    handleLogout();
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem 1rem",
-                    border: "none",
-                    background: "transparent",
-                    color: "var(--danger)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.75rem",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = "rgba(239, 68, 68, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = "transparent";
+                    padding: "0.5rem",
+                    background: "var(--bg-elevated)",
+                    borderRadius: "var(--radius-md)",
+                    color: "var(--primary)",
                   }}
                 >
-                  <FiLogOut size={16} />
-                  Logout
-                </button>
+                  {activeTab === "settings" ? (
+                    <FiSettings size={18} />
+                  ) : (
+                    navItems.find((t) => t.id === activeTab)?.icon
+                  )}
+                </div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "1.5rem",
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  {activeTab === "settings"
+                    ? "Settings"
+                    : navItems.find((t) => t.id === activeTab)?.label}
+                </h2>
               </div>
-            )}
-
-            {/* Click outside to close mobile menu */}
-            {showMobileMenu && (
               <div
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 90,
-                }}
-                onClick={() => setShowMobileMenu(false)}
-              />
-            )}
-          </div>
-
-          {/* Center: Navigation Tabs - Desktop */}
-          <div
-            className="admin-nav-tabs admin-nav-desktop"
-            style={{
-              display: "flex",
-              gap: "0.5rem",
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
-            <button
-              className={`nav-tab ${activeTab === "tickets" ? "active" : ""}`}
-              onClick={() => setActiveTab("tickets")}
-              style={{
-                background:
-                  activeTab === "tickets" ? "var(--primary)" : "transparent",
-                color:
-                  activeTab === "tickets" ? "white" : "var(--text-secondary)",
-                border: "1px solid",
-                borderColor:
-                  activeTab === "tickets" ? "var(--primary)" : "var(--border)",
-                padding: "0.5rem 0.875rem",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: "600",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.375rem",
-              }}
-            >
-              <FiFileText size={16} />
-              <span className="nav-tab-text">Tickets</span>
-            </button>
-            <button
-              className={`nav-tab ${activeTab === "offices" ? "active" : ""}`}
-              onClick={() => setActiveTab("offices")}
-              style={{
-                background:
-                  activeTab === "offices" ? "var(--primary)" : "transparent",
-                color:
-                  activeTab === "offices" ? "white" : "var(--text-secondary)",
-                border: "1px solid",
-                borderColor:
-                  activeTab === "offices" ? "var(--primary)" : "var(--border)",
-                padding: "0.5rem 0.875rem",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: "600",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.375rem",
-              }}
-            >
-              <FiMapPin size={16} />
-              <span className="nav-tab-text">Offices</span>
-            </button>
-            <button
-              className={`nav-tab ${activeTab === "categories" ? "active" : ""}`}
-              onClick={() => setActiveTab("categories")}
-              style={{
-                background:
-                  activeTab === "categories" ? "var(--primary)" : "transparent",
-                color:
-                  activeTab === "categories"
-                    ? "white"
-                    : "var(--text-secondary)",
-                border: "1px solid",
-                borderColor:
-                  activeTab === "categories"
-                    ? "var(--primary)"
-                    : "var(--border)",
-                padding: "0.5rem 0.875rem",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: "600",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.375rem",
-              }}
-            >
-              <FiTag size={16} />
-              <span className="nav-tab-text">Categories</span>
-            </button>
-            <button
-              className={`nav-tab ${activeTab === "repairBorrowed" ? "active" : ""}`}
-              onClick={() => setActiveTab("repairBorrowed")}
-              style={{
-                background:
-                  activeTab === "repairBorrowed"
-                    ? "var(--primary)"
-                    : "transparent",
-                color:
-                  activeTab === "repairBorrowed"
-                    ? "white"
-                    : "var(--text-secondary)",
-                border: "1px solid",
-                borderColor:
-                  activeTab === "repairBorrowed"
-                    ? "var(--primary)"
-                    : "var(--border)",
-                padding: "0.5rem 0.875rem",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: "600",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.375rem",
-              }}
-            >
-              <FiTool size={16} />
-              <span className="nav-tab-text">Repair/Borrowed</span>
-            </button>
-            <button
-              className={`nav-tab ${activeTab === "inventory" ? "active" : ""}`}
-              onClick={() => setActiveTab("inventory")}
-              style={{
-                background:
-                  activeTab === "inventory" ? "var(--primary)" : "transparent",
-                color:
-                  activeTab === "inventory" ? "white" : "var(--text-secondary)",
-                border: "1px solid",
-                borderColor:
-                  activeTab === "inventory"
-                    ? "var(--primary)"
-                    : "var(--border)",
-                padding: "0.5rem 0.875rem",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: "600",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.375rem",
-              }}
-            >
-              <FiBox size={16} />
-              <span className="nav-tab-text">Inventory</span>
-            </button>
-          </div>
-
-          {/* Right: Logout Button */}
-          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-            <button
-              className="admin-logout-btn"
-              onClick={handleLogout}
-              style={{
-                background: "var(--danger)",
-                color: "white",
-                border: "none",
-                padding: "0.5rem 1rem",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                fontSize: "0.8125rem",
-                fontWeight: "600",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.375rem",
-                flexShrink: 0,
-              }}
-            >
-              <FiLogOut size={16} />
-              <span className="logout-text">Logout</span>
-            </button>
+                style={{ flex: 1, display: "flex", flexDirection: "column" }}
+              >
+                {activeTab === "tickets" && <TicketList />}
+                {activeTab === "settings" && <Settings />}
+                {activeTab === "repairBorrowed" && <RepairBorrowed />}
+                {activeTab === "inventory" && <Inventory />}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Content */}
-      <div
-        className="container"
-        style={{
-          paddingTop: "2rem",
-          paddingBottom: "2rem",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-          }}
-        >
-          {activeTab === "tickets" && <TicketList />}
-          {activeTab === "offices" && <ManageOffices />}
-          {activeTab === "categories" && <ManageCategories />}
-          {activeTab === "repairBorrowed" && <RepairBorrowed />}
-          {activeTab === "inventory" && <Inventory />}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
 

@@ -328,33 +328,12 @@ function Inventory() {
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           flexWrap: "wrap",
           gap: "1rem",
         }}
       >
-        <div>
-          <h2
-            style={{
-              margin: "0 0 0.25rem 0",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-            }}
-          >
-            <FiBox style={{ color: "var(--primary)" }} /> Inventory Tracking
-          </h2>
-          <p
-            style={{
-              margin: 0,
-              color: "var(--text-secondary)",
-              fontSize: "0.9rem",
-            }}
-          >
-            Scan a barcode anytime (without clicking) to add or locate an item.
-          </p>
-        </div>
         <button
           className="btn btn-primary"
           onClick={() => {

@@ -13,12 +13,14 @@
     "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/vite": "^4.1.18",
     "browser-image-compression": "^2.0.2",
-    "jspdf": "^4.0.0",
+    "date-fns": "^4.1.0",
+    "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.12.0",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
