@@ -43,6 +43,7 @@ const UNIT_TYPES = [
   { id: "mouse", label: "Mouse", icon: <FiTool size={18} /> },
   { id: "avr", label: "AVR", icon: <FiTool size={18} /> },
   { id: "whitescreen", label: "White Screen", icon: <FiMonitor size={18} /> },
+  { id: "others", label: "Others", icon: <FiTool size={18} /> },
 ];
 
 const BARANGAYS = [
