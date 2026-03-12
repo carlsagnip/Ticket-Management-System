@@ -643,19 +643,20 @@ function RepairBorrowed() {
                 }));
               }
               // Increment unit count
-              if (data.category) {
-                const matchedUnit = UNIT_TYPES.find(
-                  (u) => u.label.toLowerCase() === data.category.toLowerCase(),
-                );
-                if (matchedUnit) {
-                  matchedUnitId = matchedUnit.id;
-                  setSelectedUnits((prev) => ({
-                    ...prev,
-                    [matchedUnitId]: Number(prev[matchedUnitId] || 0) + 1,
-                  }));
-                  if (formErrors.units)
-                    setFormErrors((p) => ({ ...p, units: "" }));
-                }
+              const categoryName = data.category || "";
+              const matchedUnit =
+                UNIT_TYPES.find(
+                  (u) => u.label.toLowerCase() === categoryName.toLowerCase(),
+                ) || UNIT_TYPES.find((u) => u.id === "others");
+
+              if (matchedUnit) {
+                matchedUnitId = matchedUnit.id;
+                setSelectedUnits((prev) => ({
+                  ...prev,
+                  [matchedUnitId]: Number(prev[matchedUnitId] || 0) + 1,
+                }));
+                if (formErrors.units)
+                  setFormErrors((p) => ({ ...p, units: "" }));
               }
               // Record mapping so removal can undo both model text + unit
               setBarcodeModelMap((prev) => ({
@@ -748,17 +749,18 @@ function RepairBorrowed() {
                   model: p.model ? `${p.model}, ${data.model}` : data.model,
                 }));
               }
-              if (data.category) {
-                const matchedUnit = UNIT_TYPES.find(
-                  (u) => u.label.toLowerCase() === data.category.toLowerCase(),
-                );
-                if (matchedUnit) {
-                  const unitId = matchedUnit.id;
-                  setEditUnits((prev) => ({
-                    ...prev,
-                    [unitId]: Number(prev[unitId] || 0) + 1,
-                  }));
-                }
+              const categoryName = data.category || "";
+              const matchedUnit =
+                UNIT_TYPES.find(
+                  (u) => u.label.toLowerCase() === categoryName.toLowerCase(),
+                ) || UNIT_TYPES.find((u) => u.id === "others");
+
+              if (matchedUnit) {
+                const unitId = matchedUnit.id;
+                setEditUnits((prev) => ({
+                  ...prev,
+                  [unitId]: Number(prev[unitId] || 0) + 1,
+                }));
               }
             }
           } catch (err) {
