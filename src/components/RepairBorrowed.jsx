@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import SignatureCanvas from "react-signature-canvas";
 import SearchableSelect from "./SearchableSelect";
@@ -1068,21 +1068,7 @@ function RepairBorrowed() {
         minHeight: 0,
       }}
     >
-      {/* ── Page header ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          marginBottom: "1.5rem",
-          flexShrink: 0,
-        }}
-      >
-        <button className="btn btn-primary" onClick={openModal}>
-          <FiPlus size={18} />
-          Add Record
-        </button>
-      </div>
+
 
       {/* '”€'”€ Statistics '”€'”€ */}
       {!loading && (
@@ -1096,206 +1082,206 @@ function RepairBorrowed() {
           }}
         >
           {/* Borrowed stats */}
-          <div
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid #bfdbfe",
-              borderRadius: "var(--radius-lg)",
-              padding: "1rem",
-              boxShadow: "var(--shadow-sm)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                marginBottom: "0.875rem",
-              }}
-            >
+          {(() => {
+            const isBorrowActive = rbCategory === "Borrowed";
+            return (
               <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: "#2563eb",
-                  flexShrink: 0,
+                onClick={() => {
+                  if (isBorrowActive) {
+                    setRbCategory("");
+                    setRbStatus("");
+                  } else {
+                    setRbCategory("Borrowed");
+                    setRbStatus("");
+                  }
                 }}
-              />
-              <span
                 style={{
-                  fontWeight: "700",
-                  fontSize: "0.875rem",
-                  color: "#2563eb",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  background: "var(--bg-card)",
+                  border: isBorrowActive ? "2px solid #2563eb" : "1px solid #bfdbfe",
+                  borderRadius: "var(--radius-lg)",
+                  padding: "1rem",
+                  boxShadow: isBorrowActive
+                    ? "0 0 0 4px #2563eb22, var(--shadow-sm)"
+                    : "var(--shadow-sm)",
+                  cursor: "pointer",
+                  transition: "border 0.18s, box-shadow 0.18s",
+                  userSelect: "none",
                 }}
               >
-                Borrowed
-              </span>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "0.75rem",
-              }}
-            >
-              {[
-                {
-                  label: "Total Borrowed",
-                  value: borrowStats.total,
-                  bg: "#eff6ff",
-                  color: "#1e40af",
-                },
-                {
-                  label: "Borrowed",
-                  value: borrowStats.active,
-                  bg: "#dbeafe",
-                  color: "#2563eb",
-                },
-                {
-                  label: "Returned",
-                  value: borrowStats.returned,
-                  bg: "#d1fae5",
-                  color: "#065f46",
-                },
-              ].map((s) => (
                 <div
-                  key={s.label}
                   style={{
-                    background: s.bg,
-                    borderRadius: "var(--radius-md)",
-                    padding: "0.75rem",
-                    textAlign: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginBottom: "0.875rem",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "1.5rem",
-                      fontWeight: "800",
-                      color: s.color,
-                      lineHeight: 1,
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: "#2563eb",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontWeight: "700",
+                      fontSize: "0.875rem",
+                      color: "#2563eb",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
                     }}
                   >
-                    {s.value}
-                  </div>
-                  <div
-                    style={{
+                    Borrowed
+                  </span>
+                  {isBorrowActive && (
+                    <span style={{
+                      marginLeft: "auto",
                       fontSize: "0.7rem",
                       fontWeight: "600",
-                      color: s.color,
-                      marginTop: "0.25rem",
-                      opacity: 0.8,
-                    }}
-                  >
-                    {s.label}
-                  </div>
+                      color: "#2563eb",
+                      background: "#dbeafe",
+                      borderRadius: "999px",
+                      padding: "0.15rem 0.55rem",
+                    }}>Filtered ✕</span>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "0.75rem",
+                  }}
+                >
+                  {[
+                    { label: "Total Borrowed", value: borrowStats.total,   bg: "#eff6ff", color: "#1e40af" },
+                    { label: "Borrowed",       value: borrowStats.active,  bg: "#dbeafe", color: "#2563eb" },
+                    { label: "Returned",       value: borrowStats.returned, bg: "#d1fae5", color: "#065f46" },
+                  ].map((s) => (
+                    <div
+                      key={s.label}
+                      style={{
+                        background: s.bg,
+                        borderRadius: "var(--radius-md)",
+                        padding: "0.75rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div style={{ fontSize: "1.5rem", fontWeight: "800", color: s.color, lineHeight: 1 }}>
+                        {s.value}
+                      </div>
+                      <div style={{ fontSize: "0.7rem", fontWeight: "600", color: s.color, marginTop: "0.25rem", opacity: 0.8 }}>
+                        {s.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Repair stats */}
-          <div
-            style={{
-              background: "var(--bg-card)",
-              border: "1px solid #ddd6fe",
-              borderRadius: "var(--radius-lg)",
-              padding: "1rem",
-              boxShadow: "var(--shadow-sm)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                marginBottom: "0.875rem",
-              }}
-            >
+          {(() => {
+            const isRepairActive = rbCategory === "Repair";
+            return (
               <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: "#7c3aed",
-                  flexShrink: 0,
+                onClick={() => {
+                  if (isRepairActive) {
+                    setRbCategory("");
+                    setRbStatus("");
+                  } else {
+                    setRbCategory("Repair");
+                    setRbStatus("");
+                  }
                 }}
-              />
-              <span
                 style={{
-                  fontWeight: "700",
-                  fontSize: "0.875rem",
-                  color: "#7c3aed",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  background: "var(--bg-card)",
+                  border: isRepairActive ? "2px solid #7c3aed" : "1px solid #ddd6fe",
+                  borderRadius: "var(--radius-lg)",
+                  padding: "1rem",
+                  boxShadow: isRepairActive
+                    ? "0 0 0 4px #7c3aed22, var(--shadow-sm)"
+                    : "var(--shadow-sm)",
+                  cursor: "pointer",
+                  transition: "border 0.18s, box-shadow 0.18s",
+                  userSelect: "none",
                 }}
               >
-                Repair
-              </span>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "0.75rem",
-              }}
-            >
-              {[
-                {
-                  label: "Total Repair",
-                  value: repairStats.total,
-                  bg: "#f5f3ff",
-                  color: "#6d28d9",
-                },
-                {
-                  label: "Repairing",
-                  value: repairStats.repairing,
-                  bg: "#ede9fe",
-                  color: "#7c3aed",
-                },
-                {
-                  label: "Returned",
-                  value: repairStats.returned,
-                  bg: "#d1fae5",
-                  color: "#065f46",
-                },
-              ].map((s) => (
                 <div
-                  key={s.label}
                   style={{
-                    background: s.bg,
-                    borderRadius: "var(--radius-md)",
-                    padding: "0.75rem",
-                    textAlign: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginBottom: "0.875rem",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "1.5rem",
-                      fontWeight: "800",
-                      color: s.color,
-                      lineHeight: 1,
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: "#7c3aed",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontWeight: "700",
+                      fontSize: "0.875rem",
+                      color: "#7c3aed",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
                     }}
                   >
-                    {s.value}
-                  </div>
-                  <div
-                    style={{
+                    Repair
+                  </span>
+                  {isRepairActive && (
+                    <span style={{
+                      marginLeft: "auto",
                       fontSize: "0.7rem",
                       fontWeight: "600",
-                      color: s.color,
-                      marginTop: "0.25rem",
-                      opacity: 0.8,
-                    }}
-                  >
-                    {s.label}
-                  </div>
+                      color: "#7c3aed",
+                      background: "#ede9fe",
+                      borderRadius: "999px",
+                      padding: "0.15rem 0.55rem",
+                    }}>Filtered ✕</span>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "0.75rem",
+                  }}
+                >
+                  {[
+                    { label: "Total Repair", value: repairStats.total,      bg: "#f5f3ff", color: "#6d28d9" },
+                    { label: "Repairing",    value: repairStats.repairing,  bg: "#ede9fe", color: "#7c3aed" },
+                    { label: "Returned",     value: repairStats.returned,   bg: "#d1fae5", color: "#065f46" },
+                  ].map((s) => (
+                    <div
+                      key={s.label}
+                      style={{
+                        background: s.bg,
+                        borderRadius: "var(--radius-md)",
+                        padding: "0.75rem",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div style={{ fontSize: "1.5rem", fontWeight: "800", color: s.color, lineHeight: 1 }}>
+                        {s.value}
+                      </div>
+                      <div style={{ fontSize: "0.7rem", fontWeight: "600", color: s.color, marginTop: "0.25rem", opacity: 0.8 }}>
+                        {s.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1340,17 +1326,7 @@ function RepairBorrowed() {
             flexWrap: "wrap",
           }}
         >
-          <button
-            className="filter-pill"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              cursor: "default",
-            }}
-          >
-            <FiFilter size={14} /> All ({filteredRecords.length})
-          </button>
+
           {/* Office */}
           <div style={{ position: "relative" }}>
             <button
@@ -1432,79 +1408,7 @@ function RepairBorrowed() {
               </>
             )}
           </div>
-          {/* Category */}
-          <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${rbCategory ? "active" : ""}`}
-              onClick={() => {
-                setShowRbCategoryDD(!showRbCategoryDD);
-                setShowRbOfficeDD(false);
-                setShowRbUnitDD(false);
-                setShowRbStatusDD(false);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              {rbCategory || "All Categories"}
-              <FiChevronDown size={14} />
-            </button>
-            {showRbCategoryDD && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: 0,
-                    marginTop: "0.5rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 50,
-                    minWidth: "160px",
-                    overflow: "hidden",
-                  }}
-                >
-                  {["", ...["Borrowed", "Repair"]].map((c) => (
-                    <button
-                      key={c || "__all__"}
-                      onClick={() => {
-                        setRbCategory(c);
-                        setShowRbCategoryDD(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        border: "none",
-                        background:
-                          rbCategory === c ? "var(--primary)" : "transparent",
-                        color:
-                          rbCategory === c ? "white" : "var(--text-primary)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (rbCategory !== c)
-                          e.currentTarget.style.background =
-                            "var(--bg-elevated)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (rbCategory !== c)
-                          e.currentTarget.style.background = "transparent";
-                      }}
-                    >
-                      {c || "All Categories"}
-                    </button>
-                  ))}
-                </div>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={() => setShowRbCategoryDD(false)}
-                />
-              </>
-            )}
-          </div>
+
           {/* Units */}
           <div style={{ position: "relative" }}>
             <button
@@ -1667,6 +1571,10 @@ function RepairBorrowed() {
               <FiX size={14} /> Clear
             </button>
           )}
+          <button className="btn btn-primary" onClick={openModal} style={{ marginLeft: "auto", height: "38px", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <FiPlus size={16} />
+            Add Record
+          </button>
         </div>
       </div>
       {/* '”€'”€ Records list '”€'”€ */}
