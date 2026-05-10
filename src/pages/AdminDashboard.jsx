@@ -4,12 +4,14 @@ import { supabase } from "../supabaseClient";
 import TicketList from "../components/TicketList";
 import RepairBorrowed from "../components/RepairBorrowed";
 import Inventory from "../components/Inventory";
+import IctEvents from "../components/IctEvents";
 import Settings from "../components/Settings";
 import {
   FiLogOut,
   FiFileText,
   FiTool,
   FiBox,
+  FiCalendar,
   FiChevronLeft,
   FiChevronRight,
   FiSettings,
@@ -41,6 +43,7 @@ function AdminDashboard() {
       icon: <FiTool size={18} />,
     },
     { id: "inventory", label: "Inventory", icon: <FiBox size={18} /> },
+    { id: "ictEvents", label: "ICT Events", icon: <FiCalendar size={18} /> },
   ];
 
   return (
@@ -422,6 +425,7 @@ function AdminDashboard() {
                 {activeTab === "settings" && <Settings />}
                 {activeTab === "repairBorrowed" && <RepairBorrowed />}
                 {activeTab === "inventory" && <Inventory />}
+                {activeTab === "ictEvents" && <IctEvents />}
               </div>
             </div>
           </div>
