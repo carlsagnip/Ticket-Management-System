@@ -48,19 +48,112 @@ function useCountdown(targetDate) {
 // Returns the "effective end" date for completed/countdown logic
 const eventEndDate = (evt) => evt.event_end_date ? new Date(evt.event_end_date) : new Date(evt.event_date);
 
+const getEventStatus = (evt) => {
+  const end = eventEndDate(evt);
+  const start = new Date(evt.event_date);
+  const now = new Date();
+  
+  if (isPast(end)) {
+    return "completed";
+  }
+  
+  if (isToday(start) || isToday(end) || (now >= start && now <= end)) {
+    return "today";
+  }
+  
+  const diffMs = start - now;
+  const diffHours = diffMs / (1000 * 60 * 60);
+  
+  if (diffHours > 0 && diffHours <= 24) {
+    return "urgent"; // Less than 24 hours
+  }
+  if (diffHours > 0 && diffHours <= 48) {
+    return "near"; // Less than 48 hours
+  }
+  
+  return "upcoming";
+};
+
+const getEventCardStyle = (evt, isSelected) => {
+  const status = getEventStatus(evt);
+  if (status === "completed") {
+    return {
+      bg: "#ecfdf5", // Pastel green
+      borderColor: isSelected ? "#2563eb" : "#a7f3d0"
+    };
+  }
+  
+  const start = new Date(evt.event_date);
+  const now = new Date();
+  const diffMs = start - now;
+  const diffHours = diffMs / (1000 * 60 * 60);
+  
+  if (status === "today" || status === "urgent" || status === "near") {
+    return {
+      bg: "#fee2e2", // Pastel red if near (<= 48h or today)
+      borderColor: isSelected ? "#2563eb" : "#fca5a5"
+    };
+  }
+  
+  // Yellow if starts in <= 5 days
+  if (diffHours > 48 && diffHours <= 120) {
+    return {
+      bg: "#fef9c3", // Pastel yellow
+      borderColor: isSelected ? "#2563eb" : "#fde047"
+    };
+  }
+  
+  // Blue if starts in > 5 days ("very very long pa")
+  return {
+    bg: "#eff6ff", // Pastel blue
+    borderColor: isSelected ? "#2563eb" : "#bfdbfe"
+  };
+};
+
 function CountdownBadge({ evt }) {
   const end = eventEndDate(evt);
   const t = useCountdown(end);
-  const past = isPast(end);
-  const todayEvt = !past && (isToday(new Date(evt.event_date)) || isToday(end));
+  const status = getEventStatus(evt);
+  
+  let color = "#1e40af";
+  let icon = <FiClock size={11}/>;
+  let text = t;
+  
+  if (status === "completed") {
+    color = "#166534";
+    icon = <FiCheck size={11}/>;
+    text = "Completed";
+  } else if (status === "today") {
+    color = "#92400e";
+    const isOngoing = new Date() >= new Date(evt.event_date);
+    text = isOngoing ? "Ongoing" : `Today: ${t}`;
+  } else {
+    const start = new Date(evt.event_date);
+    const now = new Date();
+    const diffMs = start - now;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    
+    if (diffHours > 0 && diffHours <= 48) {
+      color = "#9f1239"; // red
+      text = `Soon: ${t}`;
+    } else if (diffHours > 48 && diffHours <= 120) {
+      color = "#854d0e"; // yellow/amber
+      text = t;
+    } else {
+      color = "#1e40af"; // blue
+      text = t;
+    }
+  }
+  
   return (
     <span style={{
       display:"inline-flex", alignItems:"center", gap:"4px",
       padding:"2px 8px", borderRadius:"999px", fontSize:"0.75rem", fontWeight:600,
-      background: past ? "#dcfce7" : todayEvt ? "#fef3c7" : "#dbeafe",
-      color: past ? "#166534" : todayEvt ? "#92400e" : "#1e40af",
+      background: "#ffffff",
+      color: color,
+      border: `1px solid ${color}22`
     }}>
-      <FiCheck size={11}/> {past ? "Completed" : t}
+      {icon} {text}
     </span>
   );
 }
@@ -223,7 +316,10 @@ export default function IctEvents() {
 
   // Filtered list
   const filtered = events.filter(e => {
-    const matchTab = tab === "all" || (tab === "upcoming" ? isFuture(new Date(e.event_date)) : isPast(new Date(e.event_date)));
+    const isCompleted = isPast(eventEndDate(e));
+    const matchTab = tab === "all"
+      ? !isCompleted
+      : (tab === "upcoming" ? (isFuture(new Date(e.event_date)) && !isCompleted) : isCompleted);
     const officersStr = displayOfficers(e.person_in_charge).toLowerCase();
     const matchSearch = !search || e.title.toLowerCase().includes(search.toLowerCase()) || officersStr.includes(search.toLowerCase());
     return matchTab && matchSearch;
@@ -291,11 +387,20 @@ export default function IctEvents() {
               const isSelected = selected?.id === evt.id;
               const total = evt.checklist?.length || 0;
               const done = evt.checklist?.filter(i=>i.checked).length || 0;
+              
+              const { bg, borderColor } = getEventCardStyle(evt, isSelected);
+
               return (
                 <div key={evt.id} onClick={()=>setSelected(isSelected?null:evt)}
-                  style={{ ...CARD, padding:"16px", cursor:"pointer", transition:"all 0.15s",
-                    borderColor:isSelected?"#2563eb":"#e2e8f0",
-                    boxShadow:isSelected?"0 0 0 2px rgba(37,99,235,0.15), 0 1px 3px rgba(0,0,0,0.06)":CARD.boxShadow }}>
+                  style={{ 
+                    ...CARD, 
+                    padding:"16px", 
+                    cursor:"pointer", 
+                    transition:"all 0.15s",
+                    background: bg,
+                    borderColor: borderColor,
+                    boxShadow: isSelected ? "0 0 0 2px rgba(37,99,235,0.15), 0 1px 3px rgba(0,0,0,0.06)" : CARD.boxShadow 
+                  }}>
                   <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px", flexWrap:"wrap" }}>
@@ -377,7 +482,11 @@ export default function IctEvents() {
               </div>
               {!isPast(eventEndDate(selected)) && (
                 <div style={{ display:"flex", gap:"10px", alignItems:"center", fontSize:"0.85rem", color:"#475569" }}>
-                  <FiClock size={14} color="#7c3aed"/>
+                  <FiClock size={14} color={
+                    getEventStatus(selected) === "urgent" ? "#ef4444" :
+                    getEventStatus(selected) === "near" ? "#f97316" :
+                    getEventStatus(selected) === "today" ? "#f59e0b" : "#3b82f6"
+                  }/>
                   <div>
                     <div style={{ fontWeight:600 }}>Time Until {selected.event_end_date ? "End" : "Event"}</div>
                     <div>{formatDistanceToNow(eventEndDate(selected), { addSuffix:true })}</div>
