@@ -162,9 +162,36 @@ function ManageOfficers() {
   );
 
   if (loading) {
+    const SkeletonStatCard = () => (
+      <div className="skeleton-shimmer" style={{ background: "white", borderRadius: "var(--radius-lg)", padding: "1.25rem", border: "1px solid var(--border)", height: "100px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ width: "50%", height: "14px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+          <div style={{ width: "32px", height: "32px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+        </div>
+        <div style={{ width: "30%", height: "24px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+      </div>
+    );
+
+    const SkeletonRow = () => (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 100px 100px", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="skeleton-shimmer" style={{ height: "16px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+        ))}
+      </div>
+    );
+
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", height: "100%" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+          <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+        </div>
+        <div className="skeleton-shimmer" style={{ height: "80px", background: "white", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)" }}></div>
+        <div style={{ flex: 1, background: "white", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column" }}>
+          <div style={{ background: "var(--bg-elevated)", display: "grid", gridTemplateColumns: "1fr 100px 100px", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)" }}>
+             {[...Array(3)].map((_, i) => <div key={i} className="skeleton-shimmer" style={{ height: "14px", background: "var(--border)", borderRadius: "4px", width: "70%" }}></div>)}
+          </div>
+          {[...Array(4)].map((_, i) => <SkeletonRow key={i} />)}
+        </div>
       </div>
     );
   }

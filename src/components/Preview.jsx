@@ -15,15 +15,19 @@ import {
   FiExternalLink,
   FiArrowLeft,
   FiChevronDown,
+  FiLock,
+  FiPlus,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import SearchableSelect from "../components/SearchableSelect";
+import LoginModal from "./LoginModal";
 
 function Preview() {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -39,6 +43,7 @@ function Preview() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Animation tracking states
   const [newTicketIds, setNewTicketIds] = useState(new Set());
@@ -103,8 +108,10 @@ function Preview() {
       }
 
       setTickets(data || []);
+      setFetchError(null);
     } catch (error) {
       console.error("Error fetching tickets:", error);
+      setFetchError(error.message || "Failed to fetch tickets");
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -400,23 +407,70 @@ function Preview() {
   };
 
   if (loading) {
+    const SkeletonStatCard = () => (
+      <div className="skeleton-shimmer" style={{ background: "white", borderRadius: "var(--radius-lg)", padding: "1.25rem", border: "1px solid var(--border)", height: "100px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ width: "50%", height: "14px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+          <div style={{ width: "32px", height: "32px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+        </div>
+        <div style={{ width: "30%", height: "24px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+      </div>
+    );
+
+    const SkeletonRow = () => (
+      <div style={{ display: "grid", gridTemplateColumns: "100px 1.5fr 1fr 1fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
+        {[...Array(7)].map((_, i) => (
+          <div key={i} className="skeleton-shimmer" style={{ height: "16px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+        ))}
+      </div>
+    );
+
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
+      <div className="page-container" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", overflow: "auto" }}>
+        <div className="container" style={{ paddingTop: "2rem", paddingBottom: "2rem", flex: 1, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", height: "100%" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
+              <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+            </div>
+            
+            {/* Search and Filters Skeleton */}
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+              <div className="skeleton-shimmer" style={{ flex: 1, minWidth: "200px", height: "38px", background: "white", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}></div>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "white", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}></div>
+                <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "white", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}></div>
+                <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "white", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}></div>
+                <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "white", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}></div>
+                <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "white", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}></div>
+                <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "white", border: "1px solid var(--border)", borderRadius: "var(--radius-md)" }}></div>
+              </div>
+            </div>
+
+            <div style={{ flex: 1, background: "white", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ background: "var(--bg-elevated)", display: "grid", gridTemplateColumns: "100px 1.5fr 1fr 1fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)" }}>
+                 {[...Array(7)].map((_, i) => <div key={i} className="skeleton-shimmer" style={{ height: "14px", background: "var(--border)", borderRadius: "4px", width: "70%" }}></div>)}
+              </div>
+              {[...Array(6)].map((_, i) => <SkeletonRow key={i} />)}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="page-container"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "auto",
-      }}
-    >
+    <>
+      <div
+        className="page-container"
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "auto",
+          filter: showLoginModal ? "blur(5px)" : "none",
+          transition: "filter 0.3s ease",
+        }}
+      >
       <div
         className="container"
         style={{
@@ -434,6 +488,12 @@ function Preview() {
             flexDirection: "column",
           }}
         >
+          {fetchError && (
+            <div className="alert alert-error" style={{ marginBottom: "1rem" }}>
+              Error loading data: {fetchError}. Please check your internet connection or refresh the page.
+            </div>
+          )}
+
           {/* Statistics Cards - Fixed */}
           <div
             className="preview-stats-grid"
@@ -1148,14 +1208,10 @@ function Preview() {
                       }}
                     >
                       <tr>
-                        <th>Ticket ID</th>
-                        <th>Name</th>
-                        <th>Office</th>
+                        <th style={{ width: "45%" }}>Ticket</th>
+                        <th>Requester</th>
                         <th>Category</th>
-                        <th>Error Type</th>
-                        <th>Priority</th>
                         <th>Status</th>
-                        <th>Date</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1168,40 +1224,49 @@ function Preview() {
                           onClick={() => handleTicketClick(ticket)}
                         >
                           <td>
-                            <span
-                              style={{
-                                fontFamily: "monospace",
-                                fontWeight: "600",
-                                color: "var(--primary)",
-                              }}
-                            >
-                              {ticket.ticket_id}
-                            </span>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                              <span
+                                style={{
+                                  display: "block",
+                                  maxWidth: "450px",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  fontWeight: "600",
+                                  color: "var(--text-primary)",
+                                }}
+                                title={ticket.subject || "-"}
+                              >
+                                {ticket.subject || "-"}
+                              </span>
+                              <span
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontSize: "0.8rem",
+                                  color: "var(--primary)",
+                                }}
+                              >
+                                {ticket.ticket_id}
+                              </span>
+                            </div>
                           </td>
-                          <td>{ticket.full_name}</td>
-                          <td>{ticket.offices?.name || "N/A"}</td>
-                          <td>{ticket.categories?.name || "N/A"}</td>
                           <td>
-                            <span
-                              style={{
-                                fontSize: "0.85rem",
-                                color: ticket.error_type
-                                  ? "var(--text-primary)"
-                                  : "var(--text-muted)",
-                              }}
-                            >
-                              {ticket.error_type || "-"}
-                            </span>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                              <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{ticket.full_name}</span>
+                              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{ticket.offices?.name || "N/A"}</span>
+                            </div>
                           </td>
-                          <td>{getPriorityBadge(ticket.priority)}</td>
-                          <td>{getStatusBadge(ticket.status)}</td>
-                          <td
-                            style={{
-                              color: "var(--text-muted)",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            {formatDate(ticket.created_at)}
+                          <td>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                              <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{ticket.categories?.name || "N/A"}</span>
+                              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{ticket.error_type || "-"}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", alignItems: "flex-start" }}>
+                              {getStatusBadge(ticket.status)}
+                              {getPriorityBadge(ticket.priority)}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1273,10 +1338,10 @@ function Preview() {
             />
           )}
 
-          {/* Return to Form Button */}
+          {/* Login Button */}
           <button
-            onClick={() => navigate("/")}
-            className="btn btn-icon"
+            onClick={() => setShowLoginModal(true)}
+            className="btn btn-icon login-btn-anim"
             style={{
               position: "fixed",
               bottom: "2rem",
@@ -1293,13 +1358,18 @@ function Preview() {
               cursor: "pointer",
               borderRadius: "50%",
             }}
-            title="Return to Form"
+            title="Admin Login"
           >
-            <FiArrowLeft size={24} style={{ color: "white" }} />
+            <FiLock size={24} style={{ color: "white" }} />
           </button>
         </div>
       </div>
-    </div>
+      </div>
+
+      {showLoginModal && (
+        <LoginModal onClose={() => setShowLoginModal(false)} />
+      )}
+    </>
   );
 }
 

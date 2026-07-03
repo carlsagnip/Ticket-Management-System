@@ -116,9 +116,46 @@ function LivePreview() {
   };
 
   if (loading) {
+    const SkeletonStatCard = () => (
+      <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: "1rem", padding: "1.25rem", border: "1px solid rgba(255,255,255,0.1)", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div className="skeleton-shimmer" style={{ width: "40px", height: "40px", background: "rgba(255,255,255,0.1)", borderRadius: "4px" }}></div>
+        <div className="skeleton-shimmer" style={{ width: "80px", height: "14px", background: "rgba(255,255,255,0.1)", borderRadius: "4px", marginTop: "1rem" }}></div>
+      </div>
+    );
+
+    const SkeletonRow = () => (
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid rgba(255,255,255,0.05)", alignItems: "center" }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="skeleton-shimmer" style={{ height: "16px", background: "rgba(255,255,255,0.1)", borderRadius: "4px" }}></div>
+        ))}
+      </div>
+    );
+
     return (
-      <div className="loading-container" style={{ height: "100vh" }}>
-        <div className="spinner"></div>
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", color: "white", fontFamily: "var(--font-body)" }}>
+        {/* Header Skeleton */}
+        <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+          <div>
+            <div className="skeleton-shimmer" style={{ width: "250px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "4px", marginBottom: "0.5rem" }}></div>
+            <div className="skeleton-shimmer" style={{ width: "150px", height: "16px", background: "rgba(255,255,255,0.1)", borderRadius: "4px" }}></div>
+          </div>
+          <div className="skeleton-shimmer" style={{ width: "120px", height: "16px", background: "rgba(255,255,255,0.1)", borderRadius: "4px" }}></div>
+        </div>
+
+        {/* Stats Grid Skeleton */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "1rem", padding: "1.5rem 2rem", flexShrink: 0 }}>
+          <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+        </div>
+
+        {/* Table Skeleton */}
+        <div style={{ flex: 1, overflow: "hidden", padding: "0 2rem 2rem", display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, overflow: "hidden", borderRadius: "1rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column" }}>
+            <div style={{ background: "rgba(15,23,42,0.95)", display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+               {[...Array(4)].map((_, i) => <div key={i} className="skeleton-shimmer" style={{ height: "14px", background: "rgba(255,255,255,0.2)", borderRadius: "4px", width: "70%" }}></div>)}
+            </div>
+            {[...Array(6)].map((_, i) => <SkeletonRow key={i} />)}
+          </div>
+        </div>
       </div>
     );
   }

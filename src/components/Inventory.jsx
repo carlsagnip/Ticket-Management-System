@@ -315,6 +315,46 @@ function Inventory() {
     setShowLocationDropdown(false);
   };
 
+  if (loading) {
+    const SkeletonRow = () => (
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="skeleton-shimmer" style={{ height: "16px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+        ))}
+      </div>
+    );
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", height: "100%" }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "1rem" }}>
+          <div className="skeleton-shimmer" style={{ width: "160px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+        </div>
+        
+        {/* Action Bar */}
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <div className="skeleton-shimmer" style={{ flex: 1, minWidth: "200px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+            <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+            <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+            <div className="skeleton-shimmer" style={{ width: "120px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{ flex: 1, background: "white", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ background: "var(--bg-elevated)", display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)" }}>
+             {[...Array(5)].map((_, i) => (
+               <div key={i} className="skeleton-shimmer" style={{ height: "14px", background: "var(--border)", borderRadius: "4px", width: "70%" }}></div>
+             ))}
+          </div>
+          {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -654,14 +694,7 @@ function Inventory() {
           borderRadius: "1rem",
         }}
       >
-        {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center" }}>
-            <div className="spinner" style={{ margin: "0 auto 1rem" }} />
-            <p style={{ color: "var(--text-muted)", margin: 0 }}>
-              Loading inventory...
-            </p>
-          </div>
-        ) : filteredItems.length === 0 ? (
+        {filteredItems.length === 0 ? (
           <div
             style={{
               padding: "3rem",

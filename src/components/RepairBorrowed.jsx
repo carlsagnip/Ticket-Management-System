@@ -1059,6 +1059,56 @@ function RepairBorrowed() {
   };
 
   // '”€'”€ Render '”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€'”€
+  if (loading) {
+    const SkeletonStatCard = () => (
+      <div className="skeleton-shimmer" style={{ background: "white", borderRadius: "var(--radius-lg)", padding: "1rem", border: "1px solid var(--border)", height: "130px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div style={{ width: "24px", height: "24px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div style={{ width: "40%", height: "14px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+        </div>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <div style={{ width: "30%", height: "40px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+          <div style={{ width: "30%", height: "40px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+        </div>
+      </div>
+    );
+
+    const SkeletonRow = () => (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.5fr 1fr 1.5fr 1fr 0.5fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
+        {[...Array(7)].map((_, i) => (
+          <div key={i} className="skeleton-shimmer" style={{ height: "16px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+        ))}
+      </div>
+    );
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem", flexShrink: 0 }}>
+          <SkeletonStatCard /><SkeletonStatCard />
+        </div>
+        
+        {/* Filters */}
+        <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem" }}>
+          <div className="skeleton-shimmer" style={{ flex: 1, height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+        </div>
+
+        {/* Table */}
+        <div style={{ flex: 1, background: "white", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ background: "var(--bg-elevated)", display: "grid", gridTemplateColumns: "1fr 1fr 1.5fr 1fr 1.5fr 1fr 0.5fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)" }}>
+             {[...Array(7)].map((_, i) => (
+               <div key={i} className="skeleton-shimmer" style={{ height: "14px", background: "var(--border)", borderRadius: "4px", width: "70%" }}></div>
+             ))}
+          </div>
+          {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       style={{

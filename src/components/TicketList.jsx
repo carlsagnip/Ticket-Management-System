@@ -17,8 +17,10 @@ import {
   FiDownload,
   FiChevronDown,
   FiTag,
+  FiPlus,
 } from "react-icons/fi";
 import SearchableSelect from "../components/SearchableSelect";
+import TicketFormModal from "./TicketFormModal";
 
 function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
   const [tickets, setTickets] = useState([]);
@@ -41,6 +43,7 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
+  const [showTicketForm, setShowTicketForm] = useState(false);
 
   useEffect(() => {
     fetchTickets();
@@ -388,9 +391,47 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
   };
 
   if (loading) {
+    const SkeletonStatCard = () => (
+      <div className="skeleton-shimmer" style={{ background: "white", borderRadius: "var(--radius-lg)", padding: "1.25rem", border: "1px solid var(--border)", height: "100px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ width: "40%", height: "14px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+          <div style={{ width: "32px", height: "32px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+        </div>
+        <div style={{ width: "20%", height: "24px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+      </div>
+    );
+
+    const SkeletonRow = () => (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 2fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)", alignItems: "center" }}>
+        {[...Array(7)].map((_, i) => (
+          <div key={i} className="skeleton-shimmer" style={{ height: "16px", background: "var(--bg-elevated)", borderRadius: "4px" }}></div>
+        ))}
+      </div>
+    );
+
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+        {/* Stats Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "1.5rem", flexShrink: 0 }}>
+          <SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard /><SkeletonStatCard />
+        </div>
+        
+        {/* Filters */}
+        <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem" }}>
+          <div className="skeleton-shimmer" style={{ flex: 1, height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+          <div className="skeleton-shimmer" style={{ width: "100px", height: "38px", background: "var(--bg-elevated)", borderRadius: "var(--radius-md)" }}></div>
+        </div>
+
+        {/* Table */}
+        <div style={{ flex: 1, background: "white", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ background: "var(--bg-elevated)", display: "grid", gridTemplateColumns: "1fr 1fr 1fr 2fr 1fr 1fr 1fr", gap: "1rem", padding: "1rem", borderBottom: "1px solid var(--border)" }}>
+             {[...Array(7)].map((_, i) => (
+               <div key={i} className="skeleton-shimmer" style={{ height: "14px", background: "var(--border)", borderRadius: "4px", width: "70%" }}></div>
+             ))}
+          </div>
+          {[...Array(5)].map((_, i) => <SkeletonRow key={i} />)}
+        </div>
       </div>
     );
   }
@@ -979,8 +1020,8 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
               display: "flex",
               alignItems: "center",
               gap: "0.5rem",
-              background: "var(--success)",
-              borderColor: "var(--success)",
+              background: "var(--primary)",
+              borderColor: "var(--primary)",
               color: "white",
             }}
             title={`Export PDF (${filteredTickets.length})`}
@@ -1107,14 +1148,10 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
                   }}
                 >
                   <tr>
-                    <th>Ticket ID</th>
-                    <th>Name</th>
-                    <th>Office</th>
+                    <th style={{ width: "45%" }}>Ticket</th>
+                    <th>Requester</th>
                     <th>Category</th>
-                    <th>Error Type</th>
-                    <th>Priority</th>
                     <th>Status</th>
-                    <th>Date</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1124,40 +1161,49 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
                       onClick={() => handleTicketClick(ticket)}
                     >
                       <td>
-                        <span
-                          style={{
-                            fontFamily: "monospace",
-                            fontWeight: "600",
-                            color: "var(--primary)",
-                          }}
-                        >
-                          {ticket.ticket_id}
-                        </span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                          <span
+                            style={{
+                              display: "block",
+                              maxWidth: "450px",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              fontWeight: "600",
+                              color: "var(--text-primary)",
+                            }}
+                            title={ticket.subject || "-"}
+                          >
+                            {ticket.subject || "-"}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "monospace",
+                              fontSize: "0.8rem",
+                              color: "var(--primary)",
+                            }}
+                          >
+                            {ticket.ticket_id}
+                          </span>
+                        </div>
                       </td>
-                      <td>{ticket.full_name}</td>
-                      <td>{ticket.offices?.name || "N/A"}</td>
-                      <td>{ticket.categories?.name || "N/A"}</td>
                       <td>
-                        <span
-                          style={{
-                            fontSize: "0.85rem",
-                            color: ticket.error_type
-                              ? "var(--text-primary)"
-                              : "var(--text-muted)",
-                          }}
-                        >
-                          {ticket.error_type || "-"}
-                        </span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                          <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{ticket.full_name}</span>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{ticket.offices?.name || "N/A"}</span>
+                        </div>
                       </td>
-                      <td>{getPriorityBadge(ticket.priority)}</td>
-                      <td>{getStatusBadge(ticket.status)}</td>
-                      <td
-                        style={{
-                          color: "var(--text-muted)",
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        {formatDate(ticket.created_at)}
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                          <span style={{ fontWeight: "500", color: "var(--text-primary)" }}>{ticket.categories?.name || "N/A"}</span>
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{ticket.error_type || "-"}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", alignItems: "flex-start" }}>
+                          {getStatusBadge(ticket.status)}
+                          {getPriorityBadge(ticket.priority)}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1214,6 +1260,31 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
         )}
       </div>
 
+      {/* Floating Add Ticket Button */}
+      <button
+        onClick={() => setShowTicketForm(true)}
+        className="btn btn-icon login-btn-anim"
+        style={{
+          position: "fixed",
+          bottom: "2rem",
+          right: "2rem",
+          background: "var(--success)",
+          border: "1px solid var(--border)",
+          width: "56px",
+          height: "56px",
+          boxShadow: "var(--shadow-lg)",
+          zIndex: 90,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          borderRadius: "50%",
+        }}
+        title="Add Ticket"
+      >
+        <FiPlus size={28} style={{ color: "white" }} />
+      </button>
+
       {/* Ticket Details Modal */}
       {selectedTicket && (
         <TicketDetails
@@ -1221,6 +1292,11 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
           onClose={handleCloseDetails}
           authorName="Admin"
         />
+      )}
+
+      {/* Ticket Form Modal */}
+      {showTicketForm && (
+        <TicketFormModal onClose={() => setShowTicketForm(false)} />
       )}
     </div>
   );

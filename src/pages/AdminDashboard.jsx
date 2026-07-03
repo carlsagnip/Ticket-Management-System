@@ -6,6 +6,10 @@ import RepairBorrowed from "../components/RepairBorrowed";
 import Inventory from "../components/Inventory";
 import IctEvents from "../components/IctEvents";
 import Settings from "../components/Settings";
+import Overview from "../components/Overview";
+import Roulette from "../components/Roulette";
+import LeaveManagement from "../components/LeaveManagement";
+import CalendarView from "../components/CalendarView";
 import {
   FiLogOut,
   FiFileText,
@@ -17,25 +21,34 @@ import {
   FiSettings,
   FiMenu,
   FiX,
+  FiHome,
+  FiTarget,
+  FiClock,
+  FiList,
 } from "react-icons/fi";
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("tickets");
+  const [activeTab, setActiveTab] = useState("overview");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+  const [mountedTabs, setMountedTabs] = useState(["overview"]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate("/admin/login");
+    navigate("/");
   };
 
   // Close mobile menu when active tab changes
   useEffect(() => {
     setShowMobileMenu(false);
-  }, [activeTab]);
+    if (!mountedTabs.includes(activeTab)) {
+      setMountedTabs((prev) => [...prev, activeTab]);
+    }
+  }, [activeTab, mountedTabs]);
 
   const navItems = [
+    { id: "overview", label: "Dashboard", icon: <FiHome size={18} /> },
     { id: "tickets", label: "Tickets", icon: <FiFileText size={18} /> },
     {
       id: "repairBorrowed",
@@ -43,7 +56,10 @@ function AdminDashboard() {
       icon: <FiTool size={18} />,
     },
     { id: "inventory", label: "Inventory", icon: <FiBox size={18} /> },
-    { id: "ictEvents", label: "ICT Events", icon: <FiCalendar size={18} /> },
+    { id: "calendar", label: "Calendar", icon: <FiCalendar size={18} /> },
+    { id: "ictEvents", label: "ICT Events", icon: <FiList size={18} /> },
+    { id: "leaves", label: "Leaves & Offsets", icon: <FiClock size={18} /> },
+    { id: "roulette", label: "Roulette", icon: <FiTarget size={18} /> },
   ];
 
   return (
@@ -66,6 +82,31 @@ function AdminDashboard() {
           flex-direction: column;
           z-index: 50;
           transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+        }
+        .sidebar-toggle-btn {
+          position: absolute;
+          right: -16px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 32px;
+          height: 32px;
+          background: white;
+          border: 1px solid var(--border);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: var(--text-secondary);
+          z-index: 60;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          transition: all 0.2s ease;
+        }
+        .sidebar-toggle-btn:hover {
+          color: var(--primary);
+          border-color: var(--primary);
+          background: var(--bg-elevated);
         }
         .admin-sidebar.minimized {
           width: 80px;
@@ -306,23 +347,7 @@ function AdminDashboard() {
               <span className="sidebar-text">Settings</span>
             </button>
 
-            {/* Toggle Sidebar Button */}
-            <button
-              onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-              className="nav-button"
-              title={isSidebarMinimized ? "Expand Menu" : "Collapse Menu"}
-            >
-              <FiChevronLeft
-                size={20}
-                style={{
-                  transform: isSidebarMinimized
-                    ? "rotate(180deg) scale(1.3)"
-                    : "rotate(0) scale(1)",
-                  transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
-              />
-              <span className="sidebar-text">Collapse Menu</span>
-            </button>
+
 
             {/* Logout Button */}
             <button
@@ -334,6 +359,21 @@ function AdminDashboard() {
               <span className="sidebar-text">Logout</span>
             </button>
           </div>
+
+          {/* Floating Toggle Button */}
+          <button 
+            className="sidebar-toggle-btn"
+            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
+            title={isSidebarMinimized ? "Expand Menu" : "Collapse Menu"}
+          >
+            <FiChevronLeft 
+              size={20} 
+              style={{
+                transform: isSidebarMinimized ? "rotate(180deg)" : "rotate(0)",
+                transition: "transform 0.3s"
+              }}
+            />
+          </button>
         </div>
 
         {/* Main Content */}
@@ -421,11 +461,56 @@ function AdminDashboard() {
               <div
                 style={{ flex: 1, display: "flex", flexDirection: "column" }}
               >
-                {activeTab === "tickets" && <TicketList />}
-                {activeTab === "settings" && <Settings />}
-                {activeTab === "repairBorrowed" && <RepairBorrowed />}
-                {activeTab === "inventory" && <Inventory />}
-                {activeTab === "ictEvents" && <IctEvents />}
+                {mountedTabs.includes("overview") && (
+                  <div style={{ display: activeTab === "overview" ? "block" : "none", height: "100%" }}>
+                    <Overview onNavigate={setActiveTab} />
+                  </div>
+                )}
+                {mountedTabs.includes("tickets") && (
+                  <div style={{ display: activeTab === "tickets" ? "block" : "none", height: "100%" }}>
+                    <TicketList />
+                  </div>
+                )}
+                {mountedTabs.includes("settings") && (
+                  <div style={{ display: activeTab === "settings" ? "block" : "none", height: "100%" }}>
+                    <Settings />
+                  </div>
+                )}
+                {mountedTabs.includes("repairBorrowed") && (
+                  <div style={{ display: activeTab === "repairBorrowed" ? "block" : "none", height: "100%" }}>
+                    <RepairBorrowed />
+                  </div>
+                )}
+                {mountedTabs.includes("inventory") && (
+                  <div style={{ display: activeTab === "inventory" ? "block" : "none", height: "100%" }}>
+                    <Inventory />
+                  </div>
+                )}
+                
+                {/* Calendar Tab */}
+                {mountedTabs.includes("calendar") && (
+                  <div style={{ display: activeTab === "calendar" ? "block" : "none", height: "100%" }}>
+                    <CalendarView />
+                  </div>
+                )}
+
+                {mountedTabs.includes("ictEvents") && (
+                  <div style={{ display: activeTab === "ictEvents" ? "block" : "none", height: "100%" }}>
+                    <IctEvents />
+                  </div>
+                )}
+                
+                {/* Leaves & Offsets Tab */}
+                <div style={{ display: activeTab === "leaves" ? "block" : "none", height: "100%" }}>
+                  {mountedTabs.includes("leaves") && <LeaveManagement />}
+                </div>
+
+                {/* Roulette Tab */}
+                {mountedTabs.includes("roulette") && (
+                  <div style={{ display: activeTab === "roulette" ? "block" : "none", height: "100%" }}>
+                    <Roulette />
+                  </div>
+                )}
               </div>
             </div>
           </div>

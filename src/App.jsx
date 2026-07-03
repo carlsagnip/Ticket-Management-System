@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
 import TicketForm from "./pages/TicketForm";
-import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Preview from "./components/Preview";
 import LivePreview from "./components/LivePreview";
@@ -32,10 +31,8 @@ function App() {
 
   if (loading) {
     return (
-      <div className="page-container">
-        <div className="loading-container">
-          <div className="spinner"></div>
-        </div>
+      <div className="page-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+         <div className="skeleton-shimmer" style={{ width: "80px", height: "80px", borderRadius: "50%", background: "var(--bg-elevated)" }}></div>
       </div>
     );
   }
@@ -44,20 +41,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<TicketForm />} />
-        <Route path="/preview" element={<Preview />} />
+        <Route path="/" element={<Preview />} />
+        <Route path="/submit" element={<TicketForm />} />
         <Route path="/live" element={<LivePreview />} />
-        <Route
-          path="/admin/login"
-          element={
-            session ? (
-              <Navigate to="/admin/dashboard" replace />
-            ) : (
-              <AdminLogin />
-            )
-          }
-        />
-
         {/* Protected Admin Routes */}
         <Route
           path="/admin/dashboard"

@@ -374,7 +374,11 @@ export default function IctEvents() {
 
         {/* Event List */}
         {loading ? (
-          <div style={{ display:"flex", justifyContent:"center", padding:"40px" }}><div className="spinner"/></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="skeleton-shimmer" style={{ background: "white", borderRadius: "12px", border: "1px solid var(--border)", height: "90px", padding: "16px" }}></div>
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div style={{ ...CARD, padding:"48px", textAlign:"center", color:"#94a3b8" }}>
             <FiCalendar size={40} style={{ marginBottom:"12px" }}/>
