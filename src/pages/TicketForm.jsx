@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { useToast } from "../components/ui/use-toast";
 import {
   FiUser,
   FiMail,
@@ -17,6 +18,7 @@ import SearchableSelect from "../components/SearchableSelect";
 
 function TicketForm() {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -186,6 +188,11 @@ function TicketForm() {
         submitted = true;
         setTicketId(data.ticket_id);
         setShowSuccess(true);
+        toast({
+          title: "Ticket Submitted Successfully",
+          description: `Your ticket ID is ${data.ticket_id}. We will process it shortly.`,
+          variant: "success"
+        });
 
         // Reset form
         setFormData({
@@ -235,6 +242,11 @@ function TicketForm() {
       }
 
       setErrors({ submit: errorMessage });
+      toast({
+        title: "Submission Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
     }
 
     setLoading(false);

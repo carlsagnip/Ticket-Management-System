@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 import {
   FiBox,
   FiSearch,
@@ -34,6 +36,8 @@ const CATEGORIES = [
 const STATUSES = ["Available", "Borrowed"];
 
 function Inventory() {
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [items, setItems] = useState([]);
   const [borrowLocationMap, setBorrowLocationMap] = useState({}); // barcode → office name
   const [loading, setLoading] = useState(true);
@@ -137,9 +141,10 @@ function Inventory() {
   const handleScan = async (scannedBarcode) => {
     const existingObj = items.find((i) => i.barcode === scannedBarcode);
     if (existingObj) {
-      alert(
-        `Item is already in inventory: ${existingObj.model} (${existingObj.status})`,
-      );
+      await alert({
+        title: "Duplicate Item",
+        message: `Item is already in inventory: ${existingObj.model} (${existingObj.status})`
+      });
       return;
     }
     setFormData({ ...EMPTY_FORM, barcode: scannedBarcode });
@@ -183,29 +188,54 @@ function Inventory() {
         throw insertError;
       }
 
+      toast({
+        title: "Item Added",
+        description: `Inventory item "${formData.model.trim()}" has been added successfully.`,
+        variant: "success"
+      });
       setShowAddModal(false);
       setFormData(EMPTY_FORM);
       fetchInventory();
     } catch (err) {
       console.error("Error adding inventory item:", err);
       setError(err.message || "Failed to add item.");
+      toast({
+        title: "Error",
+        description: err.message || "Failed to add item.",
+        variant: "destructive"
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id, modelName) => {
-    if (!confirm(`Are you sure you want to delete ${modelName}?`)) return;
+    const isConfirmed = await confirm({
+      title: "Delete Item",
+      message: `Are you sure you want to delete ${modelName}?`,
+      isDestructive: true
+    });
+    if (!isConfirmed) return;
     try {
       const { error } = await supabase
         .from("inventory_items")
         .delete()
         .eq("id", id);
       if (error) throw error;
+      toast({
+        title: "Item Deleted",
+        description: `Inventory item "${modelName}" has been deleted successfully.`,
+        variant: "success"
+      });
       fetchInventory();
     } catch (err) {
       console.error("Error deleting item:", err);
-      alert("Failed to delete item.");
+      await alert({ title: "Error", message: "Failed to delete item." });
+      toast({
+        title: "Error",
+        description: "Failed to delete item.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -248,11 +278,21 @@ function Inventory() {
         }
         throw updateError;
       }
+      toast({
+        title: "Item Updated",
+        description: `Inventory item "${editData.model.trim()}" has been updated.`,
+        variant: "success"
+      });
       setEditItem(null);
       fetchInventory();
     } catch (err) {
       console.error("Error updating item:", err);
       setEditError(err.message || "Failed to save changes.");
+      toast({
+        title: "Error",
+        description: err.message || "Failed to save changes.",
+        variant: "destructive"
+      });
     } finally {
       setEditSubmitting(false);
     }
@@ -265,6 +305,11 @@ function Inventory() {
         .update({ status: newStatus })
         .eq("id", id);
       if (error) throw error;
+      toast({
+        title: "Status Updated",
+        description: `Item status successfully updated to "${newStatus}".`,
+        variant: "success"
+      });
       setItems((prev) =>
         prev.map((item) =>
           item.id === id ? { ...item, status: newStatus } : item,
@@ -272,6 +317,11 @@ function Inventory() {
       );
     } catch (err) {
       console.error("Error updating status:", err);
+      toast({
+        title: "Error",
+        description: "Failed to update item status.",
+        variant: "destructive"
+      });
     }
   };
 

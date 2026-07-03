@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 import {
   FiTag,
   FiPlus,
@@ -15,6 +17,8 @@ import {
 } from "react-icons/fi";
 
 function ManageCategories() {
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -47,80 +51,124 @@ function ManageCategories() {
 
   const handleAddCategory = async (e) => {
     e.preventDefault();
-    if (!newCategoryName.trim()) return;
+    const categoryName = newCategoryName.trim();
+    if (!categoryName) return;
 
     setError("");
     try {
       const { error } = await supabase
         .from("categories")
-        .insert([{ name: newCategoryName.trim(), is_active: true }]);
+        .insert([{ name: categoryName, is_active: true }]);
 
       if (error) {
         if (error.code === "23505") {
           setError("A category with this name already exists");
+          toast({
+            title: "Error",
+            description: "A category with this name already exists",
+            variant: "destructive"
+          });
         } else {
           throw error;
         }
         return;
       }
 
+      toast({
+        title: "Category Added",
+        description: `Category "${categoryName}" has been added successfully.`,
+        variant: "success"
+      });
       setNewCategoryName("");
       fetchCategories();
     } catch (error) {
       console.error("Error adding category:", error);
       setError("Failed to add category");
+      toast({
+        title: "Error",
+        description: "Failed to add category",
+        variant: "destructive"
+      });
     }
   };
 
   const handleUpdateCategory = async (id) => {
-    if (!editName.trim()) return;
+    const updatedName = editName.trim();
+    if (!updatedName) return;
 
     setError("");
     try {
       const { error } = await supabase
         .from("categories")
-        .update({ name: editName.trim() })
+        .update({ name: updatedName })
         .eq("id", id);
 
       if (error) {
         if (error.code === "23505") {
           setError("A category with this name already exists");
+          toast({
+            title: "Error",
+            description: "A category with this name already exists",
+            variant: "destructive"
+          });
         } else {
           throw error;
         }
         return;
       }
 
+      toast({
+        title: "Category Updated",
+        description: `Category has been renamed to "${updatedName}" successfully.`,
+        variant: "success"
+      });
       setEditingCategory(null);
       setEditName("");
       fetchCategories();
     } catch (error) {
       console.error("Error updating category:", error);
       setError("Failed to update category");
+      toast({
+        title: "Error",
+        description: "Failed to update category",
+        variant: "destructive"
+      });
     }
   };
 
   const handleToggleActive = async (category) => {
+    const nextActive = !category.is_active;
     try {
       const { error } = await supabase
         .from("categories")
-        .update({ is_active: !category.is_active })
+        .update({ is_active: nextActive })
         .eq("id", category.id);
 
       if (error) throw error;
+      toast({
+        title: "Category Status Updated",
+        description: `Category "${category.name}" is now ${nextActive ? "Active" : "Inactive"}.`,
+        variant: "success"
+      });
       fetchCategories();
     } catch (error) {
       console.error("Error toggling category:", error);
       setError("Failed to update category status");
+      toast({
+        title: "Error",
+        description: "Failed to update category status",
+        variant: "destructive"
+      });
     }
   };
 
   const handleDeleteCategory = async (id, name) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}"? This action cannot be undone.`,
-      )
-    ) {
+    const isConfirmed = await confirm({
+      title: "Delete Category",
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      isDestructive: true
+    });
+    if (!isConfirmed) {
       return;
     }
 
@@ -128,12 +176,22 @@ function ManageCategories() {
       const { error } = await supabase.from("categories").delete().eq("id", id);
 
       if (error) throw error;
+      toast({
+        title: "Category Deleted",
+        description: `Category "${name}" has been deleted successfully.`,
+        variant: "success"
+      });
       fetchCategories();
     } catch (error) {
       console.error("Error deleting category:", error);
       setError(
         "Failed to delete category. It may be in use by existing tickets.",
       );
+      toast({
+        title: "Error",
+        description: "Failed to delete category. It may be in use by existing tickets.",
+        variant: "destructive"
+      });
     }
   };
 

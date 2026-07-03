@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 import { format, formatDistanceToNow, isPast, isToday, isFuture } from "date-fns";
 import SearchableSelect from "./SearchableSelect";
 import {
@@ -161,6 +163,8 @@ function CountdownBadge({ evt }) {
 
 
 export default function IctEvents() {
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [events, setEvents] = useState([]);
   const [officers, setOfficers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -255,9 +259,25 @@ export default function IctEvents() {
   const toggleInDb = async (evtId, itemId) => {
     const evt = events.find(e => e.id===evtId);
     if (!evt) return;
+    const item = evt.checklist.find(i => i.id===itemId);
     const updated = evt.checklist.map(i => i.id===itemId ? {...i,checked:!i.checked} : i);
     setEvents(prev => prev.map(e => e.id===evtId ? {...e,checklist:updated} : e));
-    await supabase.from("ict_events").update({ checklist: updated }).eq("id", evtId);
+    try {
+      const { error } = await supabase.from("ict_events").update({ checklist: updated }).eq("id", evtId);
+      if (error) throw error;
+      toast({
+        title: "Checklist Updated",
+        description: `"${item?.text || "Item"}" has been ${!item?.checked ? "checked" : "unchecked"}.`,
+        variant: "success"
+      });
+    } catch (err) {
+      console.error("Error updating checklist:", err);
+      toast({
+        title: "Error",
+        description: "Failed to update checklist item.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -291,19 +311,61 @@ export default function IctEvents() {
         notes: formData.notes || null,
         checklist: formData.checklist
       };
-      if (editingId)
-        await supabase.from("ict_events").update(payload).eq("id", editingId);
-      else
-        await supabase.from("ict_events").insert([payload]);
+      if (editingId) {
+        const { error } = await supabase.from("ict_events").update(payload).eq("id", editingId);
+        if (error) throw error;
+        toast({
+          title: "Event Updated",
+          description: `Event "${formData.title}" has been updated successfully.`,
+          variant: "success"
+        });
+      } else {
+        const { error } = await supabase.from("ict_events").insert([payload]);
+        if (error) throw error;
+        toast({
+          title: "Event Created",
+          description: `Event "${formData.title}" has been created successfully.`,
+          variant: "success"
+        });
+      }
       closeModal(); fetchEvents();
-    } catch { setError("Failed to save. Try again."); } finally { setSubmitting(false); }
+    } catch (err) {
+      setError("Failed to save. Try again.");
+      toast({
+        title: "Error",
+        description: err.message || "Failed to save event. Try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this event?")) return;
-    await supabase.from("ict_events").delete().eq("id", id);
-    if (selected?.id === id) setSelected(null);
-    fetchEvents();
+    const isConfirmed = await confirm({
+      title: "Delete Event",
+      message: "Delete this event?",
+      isDestructive: true
+    });
+    if (!isConfirmed) return;
+    try {
+      const { error } = await supabase.from("ict_events").delete().eq("id", id);
+      if (error) throw error;
+      toast({
+        title: "Event Deleted",
+        description: "Event has been deleted successfully.",
+        variant: "success"
+      });
+      if (selected?.id === id) setSelected(null);
+      fetchEvents();
+    } catch (err) {
+      console.error("Error deleting event:", err);
+      toast({
+        title: "Error",
+        description: "Failed to delete event.",
+        variant: "destructive"
+      });
+    }
   };
 
 

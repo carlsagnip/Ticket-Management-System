@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 import SignatureCanvas from "react-signature-canvas";
 import SearchableSelect from "./SearchableSelect";
 import wacomstu540 from "../utils/WebHIDWacom";
@@ -85,6 +87,8 @@ const EMPTY_FORM = {
 };
 
 function RepairBorrowed() {
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [records, setRecords] = useState([]);
   const [offices, setOffices] = useState([]);
   const [officers, setOfficers] = useState([]);
@@ -313,23 +317,33 @@ function RepairBorrowed() {
           .in("barcode", formData.scanned_barcodes);
       }
 
+      toast({
+        title: "Record Saved",
+        description: `Repair/Borrow record for "${formData.name}" has been saved successfully.`,
+        variant: "success"
+      });
       closeModal();
       fetchRecords();
     } catch (err) {
       console.error("Error saving record:", err);
       setError("Failed to save record. Please try again.");
+      toast({
+        title: "Error Saving Record",
+        description: err.message || "Failed to save record. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (
-      !confirm(
-        "Delete this record? This cannot be undone.\n\nIf this is a Borrowed record, all borrowed items will be marked Available again.",
-      )
-    )
-      return;
+    const isConfirmed = await confirm({
+      title: "Delete Record",
+      message: "Delete this record? This cannot be undone.\n\nIf this is a Borrowed record, all borrowed items will be marked Available again.",
+      isDestructive: true
+    });
+    if (!isConfirmed) return;
     try {
       // Find the record in local state so we have its barcodes & category
       const record = records.find((r) => r.id === id);
@@ -356,9 +370,19 @@ function RepairBorrowed() {
         .delete()
         .eq("id", id);
       if (delErr) throw delErr;
+      toast({
+        title: "Record Deleted",
+        description: "Repair/Borrow record has been deleted successfully.",
+        variant: "success"
+      });
       fetchRecords();
     } catch (err) {
       console.error("Error deleting record:", err);
+      toast({
+        title: "Error Deleting Record",
+        description: err.message || "Failed to delete record.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -367,9 +391,10 @@ function RepairBorrowed() {
       setWacomConnecting(true);
       let device = new wacomstu540();
       if (!device) {
-        alert(
-          "WebHID is not supported in this browser. Please use Chrome or Edge.",
-        );
+        await alert({
+          title: "Browser Not Supported",
+          message: "WebHID is not supported in this browser. Please use Chrome or Edge."
+        });
         setWacomConnecting(false);
         return;
       }
@@ -414,13 +439,14 @@ function RepairBorrowed() {
           }
         });
       } else {
-        alert(
-          "Could not connect to Wacom STU-540. Please ensure it is plugged in.",
-        );
+        await alert({
+          title: "Connection Failed",
+          message: "Failed to connect to Wacom STU device."
+        });
       }
     } catch (e) {
       console.error(e);
-      alert("Error connecting to Wacom device: " + e.message);
+      await alert({ title: "Error", message: "Error connecting to Wacom device: " + e.message });
     } finally {
       setWacomConnecting(false);
     }
@@ -594,11 +620,21 @@ function RepairBorrowed() {
           .in("barcode", returnRecord.scanned_barcodes);
       }
 
+      toast({
+        title: "Equipment Returned",
+        description: "Equipment return has been processed successfully.",
+        variant: "success"
+      });
       closeReturnModal();
       fetchRecords();
     } catch (err) {
       console.error("Return error:", err);
       setReturnError("Failed to process return. Please check your connection.");
+      toast({
+        title: "Return Error",
+        description: err.message || "Failed to process return.",
+        variant: "destructive"
+      });
     } finally {
       setReturnSubmitting(false);
     }
@@ -861,9 +897,19 @@ function RepairBorrowed() {
         fetchRecords();
         setEditDirty(false);
         setLastSaved(new Date());
+        toast({
+          title: "Changes Saved",
+          description: "Changes have been auto-saved successfully.",
+          variant: "success"
+        });
       } catch (err) {
         console.error("Auto-Update error:", err);
         setEditError("Failed to auto-save. Please check your connection.");
+        toast({
+          title: "Auto-Save Failed",
+          description: "Failed to auto-save changes. Please check connection.",
+          variant: "destructive"
+        });
       } finally {
         setEditSaving(false);
       }

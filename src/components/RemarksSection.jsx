@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { useToast } from "./ui/use-toast";
 import { FiMessageSquare, FiSend, FiUser, FiClock } from "react-icons/fi";
 
 const RemarksSection = ({ ticketId, readOnly = false, authorName }) => {
+  const { toast } = useToast();
   const [Remarks, setRemarks] = useState([]);
   const [newRemark, setNewRemark] = useState("");
   const [loading, setLoading] = useState(true);
@@ -83,10 +85,19 @@ const RemarksSection = ({ ticketId, readOnly = false, authorName }) => {
 
       if (error) throw error;
       setNewRemark("");
+      toast({
+        title: "Remark Added",
+        description: "Your remark has been successfully added to this ticket.",
+        variant: "success"
+      });
       fetchRemarks(); // Refresh list
     } catch (error) {
       console.error("Error adding Remark:", error);
-      alert(`Failed to add Remark: ${error.message}`);
+      toast({
+        title: "Error",
+        description: `Failed to add Remark: ${error.message}`,
+        variant: "destructive"
+      });
     } finally {
       setSubmitting(false);
     }

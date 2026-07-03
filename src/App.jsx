@@ -6,6 +6,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Preview from "./components/Preview";
 import LivePreview from "./components/LivePreview";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { Toaster } from "./components/ui/toaster";
 import "./App.css";
 
 function App() {
@@ -38,26 +39,29 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Preview />} />
-        <Route path="/submit" element={<TicketForm />} />
-        <Route path="/live" element={<LivePreview />} />
-        {/* Protected Admin Routes */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute session={session}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
+    <>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Preview />} />
+          <Route path="/submit" element={<TicketForm />} />
+          <Route path="/live" element={<LivePreview />} />
+          {/* Protected Admin Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute session={session}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Catch all - redirect to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Catch all - redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster />
+    </>
   );
 }
 

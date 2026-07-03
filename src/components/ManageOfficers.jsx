@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 import {
   FiUser,
   FiPlus,
@@ -15,6 +17,8 @@ import {
 } from "react-icons/fi";
 
 function ManageOfficers() {
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [officers, setOfficers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newOfficerName, setNewOfficerName] = useState("");
@@ -47,80 +51,124 @@ function ManageOfficers() {
 
   const handleAddOfficer = async (e) => {
     e.preventDefault();
-    if (!newOfficerName.trim()) return;
+    const officerName = newOfficerName.trim();
+    if (!officerName) return;
 
     setError("");
     try {
       const { error } = await supabase
         .from("officers")
-        .insert([{ name: newOfficerName.trim(), is_active: true }]);
+        .insert([{ name: officerName, is_active: true }]);
 
       if (error) {
         if (error.code === "23505") {
           setError("An officer with this name already exists");
+          toast({
+            title: "Error",
+            description: "An officer with this name already exists",
+            variant: "destructive"
+          });
         } else {
           throw error;
         }
         return;
       }
 
+      toast({
+        title: "Officer Added",
+        description: `Officer "${officerName}" has been added successfully.`,
+        variant: "success"
+      });
       setNewOfficerName("");
       fetchOfficers();
     } catch (error) {
       console.error("Error adding officer:", error);
       setError("Failed to add officer");
+      toast({
+        title: "Error",
+        description: "Failed to add officer",
+        variant: "destructive"
+      });
     }
   };
 
   const handleUpdateOfficer = async (id) => {
-    if (!editName.trim()) return;
+    const updatedName = editName.trim();
+    if (!updatedName) return;
 
     setError("");
     try {
       const { error } = await supabase
         .from("officers")
-        .update({ name: editName.trim() })
+        .update({ name: updatedName })
         .eq("id", id);
 
       if (error) {
         if (error.code === "23505") {
           setError("An officer with this name already exists");
+          toast({
+            title: "Error",
+            description: "An officer with this name already exists",
+            variant: "destructive"
+          });
         } else {
           throw error;
         }
         return;
       }
 
+      toast({
+        title: "Officer Updated",
+        description: `Officer has been renamed to "${updatedName}" successfully.`,
+        variant: "success"
+      });
       setEditingOfficer(null);
       setEditName("");
       fetchOfficers();
     } catch (error) {
       console.error("Error updating officer:", error);
       setError("Failed to update officer");
+      toast({
+        title: "Error",
+        description: "Failed to update officer",
+        variant: "destructive"
+      });
     }
   };
 
   const handleToggleActive = async (officer) => {
+    const nextActive = !officer.is_active;
     try {
       const { error } = await supabase
         .from("officers")
-        .update({ is_active: !officer.is_active })
+        .update({ is_active: nextActive })
         .eq("id", officer.id);
 
       if (error) throw error;
+      toast({
+        title: "Officer Status Updated",
+        description: `Officer "${officer.name}" is now ${nextActive ? "Active" : "Inactive"}.`,
+        variant: "success"
+      });
       fetchOfficers();
     } catch (error) {
       console.error("Error toggling officer:", error);
       setError("Failed to update officer status");
+      toast({
+        title: "Error",
+        description: "Failed to update officer status",
+        variant: "destructive"
+      });
     }
   };
 
   const handleDeleteOfficer = async (id, name) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}"? This action cannot be undone.`,
-      )
-    ) {
+    const isConfirmed = await confirm({
+      title: "Delete Officer",
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      isDestructive: true
+    });
+    if (!isConfirmed) {
       return;
     }
 
@@ -128,12 +176,22 @@ function ManageOfficers() {
       const { error } = await supabase.from("officers").delete().eq("id", id);
 
       if (error) throw error;
+      toast({
+        title: "Officer Deleted",
+        description: `Officer "${name}" has been deleted successfully.`,
+        variant: "success"
+      });
       fetchOfficers();
     } catch (error) {
       console.error("Error deleting officer:", error);
       setError(
         "Failed to delete officer. It may be in use by existing records.",
       );
+      toast({
+        title: "Error",
+        description: "Failed to delete officer. It may be in use by existing records.",
+        variant: "destructive"
+      });
     }
   };
 

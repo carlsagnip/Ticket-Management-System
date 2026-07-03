@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 import {
   FiMapPin,
   FiPlus,
@@ -15,6 +17,8 @@ import {
 } from "react-icons/fi";
 
 function ManageOffices() {
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newOfficeName, setNewOfficeName] = useState("");
@@ -47,80 +51,124 @@ function ManageOffices() {
 
   const handleAddOffice = async (e) => {
     e.preventDefault();
-    if (!newOfficeName.trim()) return;
+    const officeName = newOfficeName.trim();
+    if (!officeName) return;
 
     setError("");
     try {
       const { error } = await supabase
         .from("offices")
-        .insert([{ name: newOfficeName.trim(), is_active: true }]);
+        .insert([{ name: officeName, is_active: true }]);
 
       if (error) {
         if (error.code === "23505") {
           setError("An office with this name already exists");
+          toast({
+            title: "Error",
+            description: "An office with this name already exists",
+            variant: "destructive"
+          });
         } else {
           throw error;
         }
         return;
       }
 
+      toast({
+        title: "Office Added",
+        description: `Office "${officeName}" has been added successfully.`,
+        variant: "success"
+      });
       setNewOfficeName("");
       fetchOffices();
     } catch (error) {
       console.error("Error adding office:", error);
       setError("Failed to add office");
+      toast({
+        title: "Error",
+        description: "Failed to add office",
+        variant: "destructive"
+      });
     }
   };
 
   const handleUpdateOffice = async (id) => {
-    if (!editName.trim()) return;
+    const updatedName = editName.trim();
+    if (!updatedName) return;
 
     setError("");
     try {
       const { error } = await supabase
         .from("offices")
-        .update({ name: editName.trim() })
+        .update({ name: updatedName })
         .eq("id", id);
 
       if (error) {
         if (error.code === "23505") {
           setError("An office with this name already exists");
+          toast({
+            title: "Error",
+            description: "An office with this name already exists",
+            variant: "destructive"
+          });
         } else {
           throw error;
         }
         return;
       }
 
+      toast({
+        title: "Office Updated",
+        description: `Office has been renamed to "${updatedName}" successfully.`,
+        variant: "success"
+      });
       setEditingOffice(null);
       setEditName("");
       fetchOffices();
     } catch (error) {
       console.error("Error updating office:", error);
       setError("Failed to update office");
+      toast({
+        title: "Error",
+        description: "Failed to update office",
+        variant: "destructive"
+      });
     }
   };
 
   const handleToggleActive = async (office) => {
+    const nextActive = !office.is_active;
     try {
       const { error } = await supabase
         .from("offices")
-        .update({ is_active: !office.is_active })
+        .update({ is_active: nextActive })
         .eq("id", office.id);
 
       if (error) throw error;
+      toast({
+        title: "Office Status Updated",
+        description: `Office "${office.name}" is now ${nextActive ? "Active" : "Inactive"}.`,
+        variant: "success"
+      });
       fetchOffices();
     } catch (error) {
       console.error("Error toggling office:", error);
       setError("Failed to update office status");
+      toast({
+        title: "Error",
+        description: "Failed to update office status",
+        variant: "destructive"
+      });
     }
   };
 
   const handleDeleteOffice = async (id, name) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}"? This action cannot be undone.`,
-      )
-    ) {
+    const isConfirmed = await confirm({
+      title: "Delete Office",
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      isDestructive: true
+    });
+    if (!isConfirmed) {
       return;
     }
 
@@ -128,12 +176,22 @@ function ManageOffices() {
       const { error } = await supabase.from("offices").delete().eq("id", id);
 
       if (error) throw error;
+      toast({
+        title: "Office Deleted",
+        description: `Office "${name}" has been deleted successfully.`,
+        variant: "success"
+      });
       fetchOffices();
     } catch (error) {
       console.error("Error deleting office:", error);
       setError(
         "Failed to delete office. It may be in use by existing tickets.",
       );
+      toast({
+        title: "Error",
+        description: "Failed to delete office. It may be in use by existing tickets.",
+        variant: "destructive"
+      });
     }
   };
 

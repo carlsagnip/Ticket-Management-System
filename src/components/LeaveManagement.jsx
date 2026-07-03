@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 import {
   format, addMonths, subMonths,
   startOfMonth, endOfMonth, eachDayOfInterval,
@@ -119,7 +121,9 @@ function CalendarPicker({ mode, startDate, endDate, onChange }) {
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
-function LeaveManagement() {
+export default function LeaveManagement() {
+  const { confirm } = useConfirm();
+  const { toast } = useToast();
   const [records, setRecords] = useState([]);
   const [officers, setOfficers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -173,18 +177,31 @@ function LeaveManagement() {
         reason: formData.reason,
       }]);
       if (error) throw error;
+      toast({ title: "Success", description: "Record added successfully.", variant: "success" });
       setShowModal(false);
       setFormData(EMPTY_FORM);
     } catch (err) {
       setError(err.message);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this record?")) return;
-    await supabase.from("leave_offsets").delete().eq("id", id);
+    const isConfirmed = await confirm({
+      title: "Delete Record",
+      message: "Are you sure you want to delete this record?",
+      isDestructive: true
+    });
+    if (!isConfirmed) return;
+    try {
+      const { error } = await supabase.from("leave_offsets").delete().eq("id", id);
+      if (error) throw error;
+      toast({ title: "Success", description: "Record deleted successfully.", variant: "success" });
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to delete record.", variant: "destructive" });
+    }
   };
 
   const fmtRange = (start, end) => {
@@ -432,4 +449,3 @@ function LeaveManagement() {
   );
 }
 
-export default LeaveManagement;

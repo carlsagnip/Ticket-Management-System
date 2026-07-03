@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
+import { useConfirm } from "./ConfirmProvider";
+import { useToast } from "./ui/use-toast";
 
 import {
   FiAlertCircle,
@@ -34,6 +36,8 @@ function TicketDetails({
   allowAttachmentEdit = true,
   allowRemarks = true,
 }) {
+  const { confirm, alert } = useConfirm();
+  const { toast } = useToast();
   const [status, setStatus] = useState(ticket.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -113,10 +117,20 @@ function TicketDetails({
 
       setAttachmentUrl(publicUrl);
       setSuccess(true);
+      toast({
+        title: "Attachment Uploaded",
+        description: "The file was successfully attached to the ticket.",
+        variant: "success"
+      });
       setTimeout(() => setSuccess(false), 2000);
     } catch (error) {
       console.error("Error uploading image:", error);
       setError("Failed to upload image.");
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload image.",
+        variant: "destructive"
+      });
     } finally {
       setUploading(false);
     }
@@ -136,10 +150,20 @@ function TicketDetails({
 
       if (error) throw error;
       setSuccess(true);
+      toast({
+        title: "Status Updated",
+        description: `Ticket status changed to "${newStatus}" successfully.`,
+        variant: "success"
+      });
       setTimeout(() => setSuccess(false), 2000);
     } catch (error) {
       console.error("Error updating status:", error);
       setError("Failed to update status");
+      toast({
+        title: "Update Failed",
+        description: "Failed to update ticket status.",
+        variant: "destructive"
+      });
       setStatus(ticket.status); // Revert on error
     } finally {
       setSaving(false);
@@ -159,11 +183,21 @@ function TicketDetails({
 
       if (error) throw error;
       setSuccess(true);
+      toast({
+        title: "Description Saved",
+        description: "Ticket description has been updated successfully.",
+        variant: "success"
+      });
       setIsEditingDescription(false);
       setTimeout(() => setSuccess(false), 2000);
     } catch (error) {
       console.error("Error updating description:", error);
       setError("Failed to update description");
+      toast({
+        title: "Update Failed",
+        description: "Failed to update ticket description.",
+        variant: "destructive"
+      });
       setEditableDescription(ticket.description); // Revert on error
     } finally {
       setSavingDescription(false);
@@ -759,12 +793,13 @@ function TicketDetails({
                         className="btn btn-small btn-danger"
                         onClick={async (e) => {
                           e.stopPropagation();
-                          if (
-                            !confirm(
-                              "Are you sure you want to remove this attachment?",
-                            )
-                          )
-                            return;
+                          const isConfirmed = await confirm({
+                            title: "Remove Attachment",
+                            message: "Are you sure you want to remove this attachment?",
+                            isDestructive: true,
+                            confirmText: "Remove"
+                          });
+                          if (!isConfirmed) return;
                           try {
                             // Delete from storage first
                             await deleteAttachmentFromStorage(attachmentUrl);
@@ -777,9 +812,19 @@ function TicketDetails({
                             if (updateError) throw updateError;
 
                             setAttachmentUrl(null);
+                            toast({
+                              title: "Attachment Removed",
+                              description: "The attachment was successfully removed from the ticket.",
+                              variant: "success"
+                            });
                           } catch (e) {
                             console.error(e);
                             setError("Failed to remove attachment");
+                            toast({
+                              title: "Remove Failed",
+                              description: "Failed to remove attachment from the ticket.",
+                              variant: "destructive"
+                            });
                           }
                         }}
                         style={{

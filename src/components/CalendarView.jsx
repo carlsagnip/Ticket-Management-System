@@ -8,6 +8,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { supabase } from '../supabaseClient';
 import { FiCalendar, FiClock, FiMapPin, FiUser } from 'react-icons/fi';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 import enUS from 'date-fns/locale/en-US';
 
@@ -28,15 +29,15 @@ const CustomToolbar = ({ date, onNavigate, view, onView }) => {
   const goToNext = () => onNavigate('NEXT');
   const goToCurrent = () => onNavigate('TODAY');
 
-  const handleMonthChange = (e) => {
+  const handleMonthChange = (val) => {
     const newDate = new Date(date);
-    newDate.setMonth(parseInt(e.target.value));
+    newDate.setMonth(parseInt(val));
     onNavigate('DATE', newDate);
   };
 
-  const handleYearChange = (e) => {
+  const handleYearChange = (val) => {
     const newDate = new Date(date);
-    newDate.setFullYear(parseInt(e.target.value));
+    newDate.setFullYear(parseInt(val));
     onNavigate('DATE', newDate);
   };
 
@@ -49,25 +50,45 @@ const CustomToolbar = ({ date, onNavigate, view, onView }) => {
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-        <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={goToCurrent}>Today</button>
-        <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={goToBack}>&lt;</button>
-        <button className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={goToNext}>&gt;</button>
+      
+      {/* Left side: Navigation */}
+      <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: 'var(--bg-elevated)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+        <button type="button" onClick={goToBack} style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}>&lt;</button>
+        <button type="button" onClick={goToCurrent} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 600, boxShadow: 'var(--shadow-sm)' }}>Today</button>
+        <button type="button" onClick={goToNext} style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}>&gt;</button>
       </div>
 
+      {/* Center: Month/Year Dropdowns */}
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-        <select className="form-input" style={{ width: 'auto', padding: '0.4rem 2rem 0.4rem 0.75rem', fontWeight: 600, fontSize: '1rem' }} value={date.getMonth()} onChange={handleMonthChange}>
-          {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-        </select>
-        <select className="form-input" style={{ width: 'auto', padding: '0.4rem 2rem 0.4rem 0.75rem', fontWeight: 600, fontSize: '1rem' }} value={date.getFullYear()} onChange={handleYearChange}>
-          {years.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
+        <Select value={date.getMonth().toString()} onValueChange={handleMonthChange}>
+          <SelectTrigger className="form-input" style={{ width: '130px', padding: '0.4rem 0.75rem', fontWeight: 600, fontSize: '0.95rem', backgroundColor: 'var(--bg-card)' }}>
+            <SelectValue placeholder="Month" />
+          </SelectTrigger>
+          <SelectContent>
+            {months.map((m, i) => (
+              <SelectItem key={i} value={i.toString()}>{m}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={date.getFullYear().toString()} onValueChange={handleYearChange}>
+          <SelectTrigger className="form-input" style={{ width: '100px', padding: '0.4rem 0.75rem', fontWeight: 600, fontSize: '0.95rem', backgroundColor: 'var(--bg-card)' }}>
+            <SelectValue placeholder="Year" />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map(y => (
+              <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
+      {/* Right side: View Toggle */}
       <div style={{ display: 'flex', background: 'var(--bg-elevated)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
         {['month', 'week', 'day', 'agenda'].map(v => (
           <button 
             key={v}
+            type="button"
             onClick={() => onView(v)}
             style={{ 
               padding: '0.4rem 1rem', 
@@ -86,6 +107,7 @@ const CustomToolbar = ({ date, onNavigate, view, onView }) => {
           </button>
         ))}
       </div>
+
     </div>
   );
 };
@@ -95,15 +117,12 @@ export default function CalendarView() {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showEventModal, setShowEventModal] = useState(false);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const [date, setDate] = useState(new Date());
+  const [view, setView] = useState('month');
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch both simultaneously
       const [leavesRes, eventsRes] = await Promise.all([
         supabase.from('leave_offsets').select('*'),
         supabase.from('ict_events').select('*')
@@ -112,21 +131,25 @@ export default function CalendarView() {
       if (leavesRes.error) throw leavesRes.error;
       if (eventsRes.error) throw eventsRes.error;
 
+      console.log('[CalendarView] Leaves raw count:', leavesRes.data?.length, leavesRes.data);
+      console.log('[CalendarView] Events raw count:', eventsRes.data?.length, eventsRes.data);
+
       const formattedEvents = [];
 
-      // Format Leave & Offsets
+      const parseLocalDate = (str) => {
+        if (!str) return new Date();
+        if (str.includes('T') || str.includes(' ')) return new Date(str);
+        const [year, month, day] = str.split('-').map(Number);
+        return new Date(year, month - 1, day, 12, 0, 0);
+      };
+
       leavesRes.data.forEach(leave => {
-        // react-big-calendar treats all-day events ending on X as exclusive if no time is provided, 
-        // but we'll try to just give it date strings and mark allDay
-        const startDate = new Date(leave.start_date);
-        const endDate = new Date(leave.end_date);
-        
-        // For pure dates, react-big-calendar usually needs the end date to be the next day if we want it to visually cover the whole day
-        endDate.setDate(endDate.getDate() + 1);
+        const startDate = parseLocalDate(leave.start_date);
+        const endDate = parseLocalDate(leave.end_date);
 
         formattedEvents.push({
           id: `leave-${leave.id}`,
-          title: `${leave.officer_name} - ${leave.type}`,
+          title: `${leave.officer_name} — ${leave.type}`,
           start: startDate,
           end: endDate,
           allDay: true,
@@ -134,28 +157,36 @@ export default function CalendarView() {
         });
       });
 
-      // Format ICT Events
       eventsRes.data.forEach(evt => {
         const startDate = new Date(evt.event_date);
-        const endDate = evt.event_end_date ? new Date(evt.event_end_date) : new Date(startDate.getTime() + 60 * 60 * 1000); // Add 1 hour if no end date
-        
+        const endDate = evt.event_end_date
+          ? new Date(evt.event_end_date)
+          : new Date(startDate.getTime() + 60 * 60 * 1000);
+        const allDay = !evt.event_date.includes('T') && !evt.event_date.includes(' ');
+
         formattedEvents.push({
           id: `event-${evt.id}`,
           title: evt.title,
           start: startDate,
           end: endDate,
-          allDay: !evt.event_date.includes('T') && !evt.event_date.includes(' '), // rough heuristic
+          allDay,
           resource: { ...evt, category: 'ict' }
         });
       });
 
+      console.log('[CalendarView] Total formatted events:', formattedEvents.length);
       setEvents(formattedEvents);
     } catch (err) {
-      console.error("Error fetching calendar data:", err);
+      console.error('[CalendarView] Error fetching data:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
 
   const eventStyleGetter = (event, start, end, isSelected) => {
     let style = {
@@ -169,13 +200,9 @@ export default function CalendarView() {
     };
 
     if (event.resource.category === 'leave') {
-      // Red/Orange for leaves
-      style.backgroundColor = 'var(--error)';
-      if (event.resource.type === 'Offset') {
-        style.backgroundColor = 'var(--warning)';
-      }
+      const isOffset = event.resource.type?.toLowerCase() === 'offset';
+      style.backgroundColor = isOffset ? 'var(--warning)' : 'var(--danger)';
     } else {
-      // Blue for ICT Events
       style.backgroundColor = 'var(--primary)';
     }
 
@@ -201,19 +228,20 @@ export default function CalendarView() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="card" style={{ flex: 1, padding: "1.5rem", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
-        <div style={{ marginBottom: "1rem", display: "flex", gap: "1rem", alignItems: "center" }}>
+        <div style={{ marginBottom: "1rem", display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <div style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "var(--primary)" }}></div>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>ICT Events</span>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>ICT Events ({events.filter(e => e.resource?.category === 'ict').length})</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <div style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "var(--error)" }}></div>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Leaves</span>
+            <div style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "var(--danger)" }}></div>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>Leaves ({events.filter(e => e.resource?.category === 'leave' && e.resource?.type?.toLowerCase() === 'leave').length})</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <div style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "var(--warning)" }}></div>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>Offsets</span>
+            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 500 }}>Offsets ({events.filter(e => e.resource?.category === 'leave' && e.resource?.type?.toLowerCase() === 'offset').length})</span>
           </div>
+          <button className="btn btn-outline" style={{ marginLeft: 'auto', padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={fetchData}>↻ Refresh Data</button>
         </div>
 
         <div style={{ flex: 1, minHeight: "500px" }}>
@@ -249,6 +277,10 @@ export default function CalendarView() {
           <Calendar
             localizer={localizer}
             events={events}
+            date={date}
+            onNavigate={setDate}
+            view={view}
+            onView={setView}
             startAccessor="start"
             endAccessor="end"
             style={{ height: '100%' }}
@@ -325,11 +357,10 @@ export default function CalendarView() {
                       <div>
                         <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "700", marginBottom: "0.25rem" }}>End Date</div>
                         <div style={{ color: "var(--text-primary)" }}>
-                          {/* We subtract 1 day from end date for display because we artificially added 1 day for big calendar full-day rendering */}
-                          {format(new Date(selectedEvent.end.getTime() - 86400000), 'MMM d, yyyy')}
+                          {format(selectedEvent.end, 'MMM d, yyyy')}
+                        </div>
                         </div>
                       </div>
-                    </div>
 
                     <div>
                       <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "700", marginBottom: "0.25rem" }}>Type</div>

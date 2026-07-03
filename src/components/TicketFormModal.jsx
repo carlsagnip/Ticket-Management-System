@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { useToast } from "./ui/use-toast";
 import {
   FiUser,
   FiMail,
@@ -23,6 +24,7 @@ import {
 } from "./ui/select";
 
 function TicketFormModal({ onClose }) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -167,6 +169,11 @@ function TicketFormModal({ onClose }) {
         submitted = true;
         setTicketId(data.ticket_id);
         setShowSuccess(true);
+        toast({
+          title: "Ticket Created Successfully",
+          description: `Ticket ID #${data.ticket_id} has been created.`,
+          variant: "success"
+        });
         setFormData({
           fullName: "", email: "", officeId: "", categoryId: "",
           priority: "Medium", errorType: "", subject: "", description: "",
@@ -182,6 +189,11 @@ function TicketFormModal({ onClose }) {
       let errorMessage = "Failed to submit ticket. Please try again.";
       if (lastError?.code === "23505") errorMessage = "System is busy. Please try again.";
       setErrors({ submit: errorMessage });
+      toast({
+        title: "Creation Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
     }
     setLoading(false);
   };
