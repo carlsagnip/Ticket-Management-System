@@ -297,15 +297,7 @@ function TicketDetails({
           )}
 
           {/* Info Grid */}
-          <div
-            className="ticket-details-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "1.5rem",
-              marginBottom: "1.5rem",
-            }}
-          >
+          <div className="ticket-details-grid">
             <div>
               <label
                 style={{

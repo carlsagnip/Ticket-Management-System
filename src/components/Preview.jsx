@@ -44,6 +44,7 @@ function Preview() {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Animation tracking states
   const [newTicketIds, setNewTicketIds] = useState(new Set());
@@ -560,16 +561,7 @@ function Preview() {
           </div>
 
           {/* Search and Filters Row - All in one line */}
-          <div
-            style={{
-              display: "flex",
-              gap: "0.75rem",
-              flexWrap: "wrap",
-              alignItems: "center",
-              marginBottom: "1rem",
-              flexShrink: 0,
-            }}
-          >
+          <div className="preview-filters">
             {/* Search Field */}
             <div
               style={{
@@ -603,15 +595,22 @@ function Preview() {
               />
             </div>
 
-            {/* All Filter Buttons - Grouped together */}
-            <div
-              style={{
-                display: "flex",
-                gap: "0.5rem",
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}
-            >
+            {/* Mobile Filter Toggle */}
+        <button
+          className="mobile-filter-toggle filter-pill"
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <FiFilter size={16} />
+          Filters
+        </button>
+
+        {/* Filter Dropdowns - Right aligned container */}
+        <div className={`preview-filters-right ${showMobileFilters ? "show" : ""}`}>
               {/* Date Filter Dropdown */}
               <div style={{ position: "relative" }}>
                 <button

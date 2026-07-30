@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import { useConfirm } from "./ConfirmProvider";
 import { useToast } from "./ui/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import {
   FiBox,
   FiSearch,
@@ -49,6 +50,7 @@ function Inventory() {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [showInvFilters, setShowInvFilters] = useState(false);
 
   // Modals & Forms
   const [showAddModal, setShowAddModal] = useState(false);
@@ -414,322 +416,146 @@ function Inventory() {
         height: "100%",
       }}
     >
-      {/* ── Header ── */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "1rem",
-        }}
-      >
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setFormData(EMPTY_FORM);
-            setShowAddModal(true);
-          }}
-        >
-          <FiPlus size={16} /> Add Item Manually
-        </button>
-      </div>
-
       {/* ── Action Bar ── */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.75rem",
-          flexWrap: "wrap",
-          alignItems: "center",
-          flexShrink: 0,
-        }}
-      >
-        {/* Search */}
-        <div style={{ position: "relative", flex: "1", minWidth: "200px" }}>
-          <FiSearch
-            style={{
-              position: "absolute",
-              left: "1rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-              width: "16px",
-              height: "16px",
-            }}
-          />
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Search by barcode or model..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ paddingLeft: "2.5rem", margin: 0, height: "38px" }}
-          />
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flexShrink: 0 }}>
+        {/* Row 1: Search — full width */}
+        <div style={{ position: "relative", width: "100%" }}>
+          <FiSearch style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", width: "16px", height: "16px" }} />
+          <input type="text" className="form-input" placeholder="Search by barcode or model..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingLeft: "2.5rem", margin: 0, height: "38px", width: "100%" }} />
         </div>
 
-        {/* Right-side pill filters */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          {/* Count badge */}
+        {/* Row 2: Filters + Buttons */}
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", position: "relative", flexWrap: "nowrap" }}>
+          {/* Desktop filters — hidden on mobile */}
+          <div className="rb-filters-desktop" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flex: 1 }}>
+            {/* Count badge */}
+            <button className="filter-pill" style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "default" }}>
+              <FiFilter size={16} /> All ({filteredItems.length})
+            </button>
+
+            {/* Category dropdown */}
+            <div style={{ position: "relative" }}>
+              <button className={`filter-pill ${filterCategory ? "active" : ""}`} onClick={() => { setShowCategoryDropdown(!showCategoryDropdown); setShowStatusDropdown(false); setShowLocationDropdown(false); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {filterCategory || "All Categories"}<FiChevronDown size={14} />
+              </button>
+              {showCategoryDropdown && (
+                <>
+                  <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50, minWidth: "175px", overflow: "hidden" }}>
+                    {["", ...CATEGORIES].map((c) => (
+                      <button key={c || "__all__"} onClick={() => { setFilterCategory(c); setShowCategoryDropdown(false); }} style={{ width: "100%", padding: "0.75rem 1rem", border: "none", background: filterCategory === c ? "var(--primary)" : "transparent", color: filterCategory === c ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem", fontWeight: "500" }}>
+                        {c || "All Categories"}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowCategoryDropdown(false)} />
+                </>
+              )}
+            </div>
+
+            {/* Status dropdown */}
+            <div style={{ position: "relative" }}>
+              <button className={`filter-pill ${filterStatus ? "active" : ""}`} onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowCategoryDropdown(false); setShowLocationDropdown(false); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {filterStatus || "All Statuses"}<FiChevronDown size={14} />
+              </button>
+              {showStatusDropdown && (
+                <>
+                  <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50, minWidth: "160px", overflow: "hidden" }}>
+                    {["", ...STATUSES].map((s) => (
+                      <button key={s || "__all__"} onClick={() => { setFilterStatus(s); setShowStatusDropdown(false); }} style={{ width: "100%", padding: "0.75rem 1rem", border: "none", background: filterStatus === s ? "var(--primary)" : "transparent", color: filterStatus === s ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem", fontWeight: "500" }}>
+                        {s || "All Statuses"}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowStatusDropdown(false)} />
+                </>
+              )}
+            </div>
+
+            {/* Location dropdown */}
+            <div style={{ position: "relative" }}>
+              <button className={`filter-pill ${filterLocation ? "active" : ""}`} onClick={() => { setShowLocationDropdown(!showLocationDropdown); setShowCategoryDropdown(false); setShowStatusDropdown(false); }} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                {filterLocation || "All Locations"}<FiChevronDown size={14} />
+              </button>
+              {showLocationDropdown && (
+                <>
+                  <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50, minWidth: "160px", overflow: "hidden" }}>
+                    {["", ...locationOptions].map((loc) => (
+                      <button key={loc || "__all__"} onClick={() => { setFilterLocation(loc); setShowLocationDropdown(false); }} style={{ width: "100%", padding: "0.75rem 1rem", border: "none", background: filterLocation === loc ? "var(--primary)" : "transparent", color: filterLocation === loc ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem", fontWeight: "500" }}>
+                        {loc || "All Locations"}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowLocationDropdown(false)} />
+                </>
+              )}
+            </div>
+
+            {/* Clear chip */}
+            {hasActiveFilters && (
+              <button className="filter-pill" onClick={clearAllFilters} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <FiX size={14} /> Clear
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Filters button */}
           <button
-            className="filter-pill"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              cursor: "default",
-            }}
+            className="rb-mobile-filter-btn filter-pill"
+            onClick={() => setShowInvFilters(!showInvFilters)}
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}
           >
-            <FiFilter size={16} />
-            All ({filteredItems.length})
+            <FiFilter size={15} />
+            Filters
           </button>
 
-          {/* Category dropdown */}
-          <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${filterCategory ? "active" : ""}`}
-              onClick={() => {
-                setShowCategoryDropdown(!showCategoryDropdown);
-                setShowStatusDropdown(false);
-                setShowLocationDropdown(false);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              {filterCategory || "All Categories"}
-              <FiChevronDown size={14} />
-            </button>
-            {showCategoryDropdown && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: 0,
-                    marginTop: "0.5rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 50,
-                    minWidth: "175px",
-                    overflow: "hidden",
-                  }}
-                >
-                  {["", ...CATEGORIES].map((c) => (
-                    <button
-                      key={c || "__all__"}
-                      onClick={() => {
-                        setFilterCategory(c);
-                        setShowCategoryDropdown(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        border: "none",
-                        background:
-                          filterCategory === c
-                            ? "var(--primary)"
-                            : "transparent",
-                        color:
-                          filterCategory === c
-                            ? "white"
-                            : "var(--text-primary)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                        transition: "background 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (filterCategory !== c)
-                          e.currentTarget.style.background =
-                            "var(--bg-elevated)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (filterCategory !== c)
-                          e.currentTarget.style.background = "transparent";
-                      }}
-                    >
-                      {c || "All Categories"}
-                    </button>
-                  ))}
-                </div>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={() => setShowCategoryDropdown(false)}
-                />
-              </>
-            )}
-          </div>
+          {/* Add Item button — always visible */}
+          <button className="btn btn-primary" onClick={() => { setFormData(EMPTY_FORM); setShowAddModal(true); }} style={{ height: "38px", display: "flex", alignItems: "center", gap: "0.4rem", flexShrink: 0 }}>
+            <FiPlus size={16} /> Add Item
+          </button>
 
-          {/* Status dropdown */}
-          <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${filterStatus ? "active" : ""}`}
-              onClick={() => {
-                setShowStatusDropdown(!showStatusDropdown);
-                setShowCategoryDropdown(false);
-                setShowLocationDropdown(false);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              {filterStatus || "All Statuses"}
-              <FiChevronDown size={14} />
-            </button>
-            {showStatusDropdown && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: 0,
-                    marginTop: "0.5rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 50,
-                    minWidth: "160px",
-                    overflow: "hidden",
-                  }}
-                >
-                  {["", ...STATUSES].map((s) => (
-                    <button
-                      key={s || "__all__"}
-                      onClick={() => {
-                        setFilterStatus(s);
-                        setShowStatusDropdown(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        border: "none",
-                        background:
-                          filterStatus === s ? "var(--primary)" : "transparent",
-                        color:
-                          filterStatus === s ? "white" : "var(--text-primary)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                        transition: "background 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (filterStatus !== s)
-                          e.currentTarget.style.background =
-                            "var(--bg-elevated)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (filterStatus !== s)
-                          e.currentTarget.style.background = "transparent";
-                      }}
-                    >
-                      {s || "All Statuses"}
-                    </button>
-                  ))}
+          {/* Mobile filter popup */}
+          {showInvFilters && (
+            <>
+              <div style={{ position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "min(280px, 90vw)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1rem", boxShadow: "var(--shadow-xl)", zIndex: 200, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <p style={{ margin: 0, fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>Filter Items</p>
+                <div>
+                  <p style={{ margin: "0 0 0.4rem", fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 500 }}>Category</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                    {["", ...CATEGORIES].map((c) => (
+                      <button key={c || "__all__"} onClick={() => setFilterCategory(c)} style={{ padding: "0.3rem 0.75rem", borderRadius: "9999px", border: "1px solid var(--border)", background: filterCategory === c ? "var(--primary)" : "transparent", color: filterCategory === c ? "white" : "var(--text-primary)", fontSize: "0.8rem", cursor: "pointer", fontWeight: 500 }}>
+                        {c || "All"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={() => setShowStatusDropdown(false)}
-                />
-              </>
-            )}
-          </div>
-
-          {/* Location dropdown */}
-          <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${filterLocation ? "active" : ""}`}
-              onClick={() => {
-                setShowLocationDropdown(!showLocationDropdown);
-                setShowCategoryDropdown(false);
-                setShowStatusDropdown(false);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              {filterLocation || "All Locations"}
-              <FiChevronDown size={14} />
-            </button>
-            {showLocationDropdown && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: 0,
-                    marginTop: "0.5rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 50,
-                    minWidth: "160px",
-                    overflow: "hidden",
-                  }}
-                >
-                  {["", ...locationOptions].map((loc) => (
-                    <button
-                      key={loc || "__all__"}
-                      onClick={() => {
-                        setFilterLocation(loc);
-                        setShowLocationDropdown(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        border: "none",
-                        background:
-                          filterLocation === loc
-                            ? "var(--primary)"
-                            : "transparent",
-                        color:
-                          filterLocation === loc
-                            ? "white"
-                            : "var(--text-primary)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                        transition: "background 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (filterLocation !== loc)
-                          e.currentTarget.style.background =
-                            "var(--bg-elevated)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (filterLocation !== loc)
-                          e.currentTarget.style.background = "transparent";
-                      }}
-                    >
-                      {loc || "All Locations"}
-                    </button>
-                  ))}
+                <div>
+                  <p style={{ margin: "0 0 0.4rem", fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 500 }}>Status</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                    {["", ...STATUSES].map((s) => (
+                      <button key={s || "__all__"} onClick={() => setFilterStatus(s)} style={{ padding: "0.3rem 0.75rem", borderRadius: "9999px", border: "1px solid var(--border)", background: filterStatus === s ? "var(--primary)" : "transparent", color: filterStatus === s ? "white" : "var(--text-primary)", fontSize: "0.8rem", cursor: "pointer", fontWeight: 500 }}>
+                        {s || "All"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={() => setShowLocationDropdown(false)}
-                />
-              </>
-            )}
-          </div>
-
-          {/* Clear chip */}
-          {hasActiveFilters && (
-            <button
-              className="filter-pill"
-              onClick={clearAllFilters}
-              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-            >
-              <FiX size={14} /> Clear
-            </button>
+                <div>
+                  <p style={{ margin: "0 0 0.4rem", fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 500 }}>Location</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                    {["", ...locationOptions].map((loc) => (
+                      <button key={loc || "__all__"} onClick={() => setFilterLocation(loc)} style={{ padding: "0.3rem 0.75rem", borderRadius: "9999px", border: "1px solid var(--border)", background: filterLocation === loc ? "var(--primary)" : "transparent", color: filterLocation === loc ? "white" : "var(--text-primary)", fontSize: "0.8rem", cursor: "pointer", fontWeight: 500 }}>
+                        {loc || "All"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {hasActiveFilters && (
+                  <button className="filter-pill" onClick={() => { clearAllFilters(); setShowInvFilters(false); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", width: "100%" }}>
+                    <FiX size={14} /> Clear Filters
+                  </button>
+                )}
+              </div>
+              <div style={{ position: "fixed", inset: 0, zIndex: 199 }} onClick={() => setShowInvFilters(false)} />
+            </>
           )}
         </div>
       </div>
@@ -767,6 +593,7 @@ function Inventory() {
             </p>
           </div>
         ) : (
+          <>
           <div
             className="table-container preview-table-desktop"
             style={{
@@ -945,6 +772,69 @@ function Inventory() {
               </tbody>
             </table>
           </div>
+          
+          {/* Mobile Card View */}
+          <div className="preview-mobile-cards">
+            {filteredItems.map((item) => (
+              <div key={item.id} className="preview-ticket-card" onClick={() => openEdit(item)}>
+                <div className="preview-card-top">
+                  <span className="preview-card-name">{item.model}</span>
+                  <span className="preview-card-status">
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.3rem",
+                        padding: "3px 10px",
+                        borderRadius: "9999px",
+                        fontSize: "0.78rem",
+                        fontWeight: "700",
+                        background:
+                          item.status === "Available"
+                            ? "#dcfce7"
+                            : item.status === "Borrowed"
+                              ? "#dbeafe"
+                              : "#fef9c3",
+                        color:
+                          item.status === "Available"
+                            ? "#166534"
+                            : item.status === "Borrowed"
+                              ? "#1d4ed8"
+                              : "#854d0e",
+                      }}
+                    >
+                      {item.status}
+                    </span>
+                  </span>
+                </div>
+                <div className="preview-card-bottom">
+                  <span className="preview-card-id">{item.barcode}</span>
+                  <span className="preview-card-divider">•</span>
+                  <span className="preview-card-category">{item.category}</span>
+                  <span className="preview-card-divider">•</span>
+                  <span className="preview-card-office">
+                    {item.status === "Borrowed" && borrowLocationMap[item.barcode]
+                      ? borrowLocationMap[item.barcode]
+                      : item.location || "Unassigned"}
+                  </span>
+                </div>
+                <div className="preview-card-date" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                    {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                  <button
+                    className="btn btn-icon btn-ghost"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.model); }}
+                    title="Delete Item"
+                    style={{ color: "var(--danger)", padding: "0.25rem", height: "auto" }}
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </div>
 
@@ -961,7 +851,7 @@ function Inventory() {
                 className="btn btn-icon btn-ghost"
                 onClick={() => !submitting && setShowAddModal(false)}
               >
-                <FiX size={20} />
+                <FiX size={22} />
               </button>
             </div>
 
@@ -1019,18 +909,21 @@ function Inventory() {
 
                 <div className="form-group">
                   <label className="form-label">Category</label>
-                  <select
-                    name="category"
-                    className="form-select"
+                  <Select
                     value={formData.category}
-                    onChange={handleChange}
+                    onValueChange={(val) => setFormData((prev) => ({ ...prev, category: val }))}
                   >
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="form-input" style={{ width: "100%", height: "40px" }}>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </form>
             </div>
@@ -1076,7 +969,7 @@ function Inventory() {
                 className="btn btn-icon btn-ghost"
                 onClick={() => !editSubmitting && setEditItem(null)}
               >
-                <FiX size={20} />
+                <FiX size={22} />
               </button>
             </div>
 
@@ -1134,18 +1027,21 @@ function Inventory() {
 
                 <div className="form-group">
                   <label className="form-label">Category</label>
-                  <select
-                    name="category"
-                    className="form-select"
+                  <Select
                     value={editData.category}
-                    onChange={handleEditChange}
+                    onValueChange={(val) => setEditData((prev) => ({ ...prev, category: val }))}
                   >
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="form-input" style={{ width: "100%", height: "40px" }}>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </form>
             </div>

@@ -395,7 +395,7 @@ export default function IctEvents() {
       {/* LEFT PANEL */}
       <div style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", gap:"16px", overflow:"auto" }}>
         {/* Stats Row */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"12px" }}>
+        <div className="stats-grid-4">
           {[
             { label:"Total Events", value:events.length, color:"#2563eb", bg:"#eff6ff" },
             { label:"Upcoming", value:upcoming.length, color:"#7c3aed", bg:"#f5f3ff" },
@@ -410,7 +410,7 @@ export default function IctEvents() {
         </div>
 
         {/* Toolbar */}
-        <div style={{ display:"flex", gap:"10px", alignItems:"center" }}>
+        <div style={{ display:"flex", gap:"10px", alignItems:"center", flexWrap: "wrap" }}>
           <div style={{ position:"relative", flex:1 }}>
             <FiSearch size={14} style={{ position:"absolute", left:"10px", top:"50%", transform:"translateY(-50%)", color:"#94a3b8" }}/>
             <input placeholder="Search events..." value={search} onChange={e=>setSearch(e.target.value)}

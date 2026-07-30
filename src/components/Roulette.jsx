@@ -214,13 +214,13 @@ function Roulette() {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: "flex", gap: "2rem", overflow: "hidden" }}>
+      <div style={{ flex: 1, display: "flex", gap: "2rem", overflow: "auto", flexWrap: "wrap" }}>
         
         {/* Main Wheel Area */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "2.5rem" }}>
+        <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "2.5rem" }}>
           
-          {/* Wheel Container - INCREASED SIZE TO 500px */}
-          <div style={{ position: "relative", width: "500px", height: "500px", margin: "0 auto", transition: "all 0.3s" }}>
+          {/* Wheel Container */}
+          <div className="responsive-wheel">
             
             {/* Pointer */}
             <div style={{
@@ -383,9 +383,8 @@ function Roulette() {
 
         {/* Sidebar */}
         <div style={{ 
-          width: "250px", 
-          borderLeft: "1px solid var(--border)", 
-          paddingLeft: "1.5rem",
+          flex: "1 1 250px",
+          minWidth: "250px",
           display: "flex",
           flexDirection: "column"
         }}>

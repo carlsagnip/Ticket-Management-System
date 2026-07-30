@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient";
 import { useConfirm } from "./ConfirmProvider";
 import { useToast } from "./ui/use-toast";
 import SignatureCanvas from "react-signature-canvas";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import SearchableSelect from "./SearchableSelect";
 import wacomstu540 from "../utils/WebHIDWacom";
 import {
@@ -141,6 +142,7 @@ function RepairBorrowed() {
   const [showRbCategoryDD, setShowRbCategoryDD] = useState(false);
   const [showRbUnitDD, setShowRbUnitDD] = useState(false);
   const [showRbStatusDD, setShowRbStatusDD] = useState(false);
+  const [showRbFilters, setShowRbFilters] = useState(false);
 
   // Barcode specific inputs
   const [addBarcode, setAddBarcode] = useState("");
@@ -1171,7 +1173,7 @@ function RepairBorrowed() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "1rem",
             marginBottom: "1.5rem",
             flexShrink: 0,
@@ -1382,295 +1384,111 @@ function RepairBorrowed() {
       )}
 
       {/* action-bar */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.75rem",
-          flexWrap: "wrap",
-          alignItems: "center",
-          flexShrink: 0,
-          marginBottom: "0.75rem",
-        }}
-      >
-        <div style={{ position: "relative", flex: "1", minWidth: "200px" }}>
-          <FiSearch
-            style={{
-              position: "absolute",
-              left: "1rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "var(--text-muted)",
-              width: "16px",
-              height: "16px",
-              pointerEvents: "none",
-            }}
-          />
-          <input
-            type="text"
-            className="form-input"
-            placeholder="Search by office, model or name..."
-            value={rbSearch}
-            onChange={(e) => setRbSearch(e.target.value)}
-            style={{ paddingLeft: "2.5rem", margin: 0, height: "38px" }}
-          />
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flexShrink: 0, marginBottom: "0.75rem" }}>
+        {/* Row 1: Search — full width */}
+        <div style={{ position: "relative", width: "100%" }}>
+          <FiSearch style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", width: "16px", height: "16px", pointerEvents: "none" }} />
+          <input type="text" className="form-input" placeholder="Search by office, model or name..." value={rbSearch} onChange={(e) => setRbSearch(e.target.value)} style={{ paddingLeft: "2.5rem", margin: 0, height: "38px", width: "100%" }} />
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
 
-          {/* Office */}
-          <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${rbOffice ? "active" : ""}`}
-              onClick={() => {
-                setShowRbOfficeDD(!showRbOfficeDD);
-                setShowRbCategoryDD(false);
-                setShowRbUnitDD(false);
-                setShowRbStatusDD(false);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              {rbOffice
-                ? offices.find((o) => o.id === rbOffice)?.name || rbOffice
-                : "All Offices"}
-              <FiChevronDown size={14} />
-            </button>
-            {showRbOfficeDD && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: 0,
-                    marginTop: "0.5rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 50,
-                    minWidth: "220px",
-                    maxHeight: "280px",
-                    overflow: "auto",
-                  }}
-                >
-                  {["", ...offices.map((o) => o.id)].map((id) => {
-                    const label = id
-                      ? (offices.find((o) => o.id === id)?.name ?? id)
-                      : "All Offices";
-                    return (
-                      <button
-                        key={id || "__all__"}
-                        onClick={() => {
-                          setRbOffice(id);
-                          setShowRbOfficeDD(false);
-                        }}
-                        style={{
-                          width: "100%",
-                          padding: "0.75rem 1rem",
-                          border: "none",
-                          background:
-                            rbOffice === id ? "var(--primary)" : "transparent",
-                          color:
-                            rbOffice === id ? "white" : "var(--text-primary)",
-                          textAlign: "left",
-                          cursor: "pointer",
-                          fontSize: "0.875rem",
-                          fontWeight: "500",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (rbOffice !== id)
-                            e.currentTarget.style.background =
-                              "var(--bg-elevated)";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (rbOffice !== id)
-                            e.currentTarget.style.background = "transparent";
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={() => setShowRbOfficeDD(false)}
-                />
-              </>
+        {/* Row 2: Filters + Buttons */}
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", position: "relative", flexWrap: "nowrap" }}>
+          {/* Desktop filters — hidden on mobile */}
+          <div className="rb-filters-desktop" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flex: 1 }}>
+            <Select value={rbOffice || "all"} onValueChange={(val) => setRbOffice(val === "all" ? "" : val)}>
+              <SelectTrigger className="form-input" style={{ width: 'auto', minWidth: '130px', padding: '0.4rem 0.75rem', fontWeight: 500, fontSize: '0.85rem', backgroundColor: 'var(--bg-card)', height: '38px', borderRadius: 'var(--radius-full)' }}>
+                <SelectValue placeholder="All Offices" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Offices</SelectItem>
+                {offices.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+
+            <Select value={rbUnit || "all"} onValueChange={(val) => setRbUnit(val === "all" ? "" : val)}>
+              <SelectTrigger className="form-input" style={{ width: 'auto', minWidth: '120px', padding: '0.4rem 0.75rem', fontWeight: 500, fontSize: '0.85rem', backgroundColor: 'var(--bg-card)', height: '38px', borderRadius: 'var(--radius-full)' }}>
+                <SelectValue placeholder="All Units" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Units</SelectItem>
+                {UNIT_TYPES.map((u) => (<SelectItem key={u.id} value={u.id}>{u.label}</SelectItem>))}
+              </SelectContent>
+            </Select>
+
+            <Select value={rbStatus || "all"} onValueChange={(val) => setRbStatus(val === "all" ? "" : val)}>
+              <SelectTrigger className="form-input" style={{ width: 'auto', minWidth: '130px', padding: '0.4rem 0.75rem', fontWeight: 500, fontSize: '0.85rem', backgroundColor: 'var(--bg-card)', height: '38px', borderRadius: 'var(--radius-full)' }}>
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {["Borrowed", "Repairing", "Returned"].map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}
+              </SelectContent>
+            </Select>
+
+            {rbHasFilters && (
+              <button className="filter-pill" onClick={clearRbFilters} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <FiX size={14} /> Clear
+              </button>
             )}
           </div>
 
-          {/* Units */}
-          <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${rbUnit ? "active" : ""}`}
-              onClick={() => {
-                setShowRbUnitDD(!showRbUnitDD);
-                setShowRbOfficeDD(false);
-                setShowRbCategoryDD(false);
-                setShowRbStatusDD(false);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              {rbUnit
-                ? (UNIT_TYPES.find((u) => u.id === rbUnit)?.label ?? rbUnit)
-                : "All Units"}
-              <FiChevronDown size={14} />
-            </button>
-            {showRbUnitDD && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: 0,
-                    marginTop: "0.5rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 50,
-                    minWidth: "160px",
-                    maxHeight: "280px",
-                    overflow: "auto",
-                  }}
-                >
-                  {["", ...UNIT_TYPES.map((u) => u.id)].map((id) => {
-                    const label = id
-                      ? (UNIT_TYPES.find((u) => u.id === id)?.label ?? id)
-                      : "All Units";
-                    return (
-                      <button
-                        key={id || "__all__"}
-                        onClick={() => {
-                          setRbUnit(id);
-                          setShowRbUnitDD(false);
-                        }}
-                        style={{
-                          width: "100%",
-                          padding: "0.75rem 1rem",
-                          border: "none",
-                          background:
-                            rbUnit === id ? "var(--primary)" : "transparent",
-                          color:
-                            rbUnit === id ? "white" : "var(--text-primary)",
-                          textAlign: "left",
-                          cursor: "pointer",
-                          fontSize: "0.875rem",
-                          fontWeight: "500",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (rbUnit !== id)
-                            e.currentTarget.style.background =
-                              "var(--bg-elevated)";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (rbUnit !== id)
-                            e.currentTarget.style.background = "transparent";
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={() => setShowRbUnitDD(false)}
-                />
-              </>
-            )}
-          </div>
-          {/* Status */}
-          <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${rbStatus ? "active" : ""}`}
-              onClick={() => {
-                setShowRbStatusDD(!showRbStatusDD);
-                setShowRbOfficeDD(false);
-                setShowRbCategoryDD(false);
-                setShowRbUnitDD(false);
-              }}
-              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-            >
-              {rbStatus || "All Statuses"}
-              <FiChevronDown size={14} />
-            </button>
-            {showRbStatusDD && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "100%",
-                    left: 0,
-                    marginTop: "0.5rem",
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius-md)",
-                    boxShadow: "var(--shadow-lg)",
-                    zIndex: 50,
-                    minWidth: "160px",
-                    overflow: "hidden",
-                  }}
-                >
-                  {["", ...["Borrowed", "Repairing", "Returned"]].map((s) => (
-                    <button
-                      key={s || "__all__"}
-                      onClick={() => {
-                        setRbStatus(s);
-                        setShowRbStatusDD(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        border: "none",
-                        background:
-                          rbStatus === s ? "var(--primary)" : "transparent",
-                        color: rbStatus === s ? "white" : "var(--text-primary)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (rbStatus !== s)
-                          e.currentTarget.style.background =
-                            "var(--bg-elevated)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (rbStatus !== s)
-                          e.currentTarget.style.background = "transparent";
-                      }}
-                    >
-                      {s || "All Statuses"}
-                    </button>
-                  ))}
-                </div>
-                <div
-                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
-                  onClick={() => setShowRbStatusDD(false)}
-                />
-              </>
-            )}
-          </div>
-          {rbHasFilters && (
-            <button
-              className="filter-pill"
-              onClick={clearRbFilters}
-              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-            >
-              <FiX size={14} /> Clear
-            </button>
-          )}
-          <button className="btn btn-primary" onClick={openModal} style={{ marginLeft: "auto", height: "38px", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          {/* Mobile Filters button — visible only on mobile */}
+          <button
+            className="rb-mobile-filter-btn filter-pill"
+            onClick={() => setShowRbFilters(!showRbFilters)}
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}
+          >
+            <FiFilter size={15} />
+            Filters
+          </button>
+
+          {/* Add Record button — always visible */}
+          <button className="btn btn-primary" onClick={openModal} style={{ height: "38px", display: "flex", alignItems: "center", gap: "0.4rem", flexShrink: 0 }}>
             <FiPlus size={16} />
             Add Record
           </button>
+
+          {/* Mobile filter popup */}
+          {showRbFilters && (
+            <>
+              <div style={{ position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "min(280px, 90vw)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1rem", boxShadow: "var(--shadow-xl)", zIndex: 200, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <p style={{ margin: 0, fontWeight: 600, fontSize: "0.875rem", color: "var(--text-secondary)" }}>Filter Records</p>
+                <Select value={rbOffice || "all"} onValueChange={(val) => setRbOffice(val === "all" ? "" : val)}>
+                  <SelectTrigger className="form-input" style={{ width: '100%', fontWeight: 500, fontSize: '0.85rem', backgroundColor: 'var(--bg-card)', height: '38px' }}>
+                    <SelectValue placeholder="All Offices" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Offices</SelectItem>
+                    {offices.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+                <Select value={rbUnit || "all"} onValueChange={(val) => setRbUnit(val === "all" ? "" : val)}>
+                  <SelectTrigger className="form-input" style={{ width: '100%', fontWeight: 500, fontSize: '0.85rem', backgroundColor: 'var(--bg-card)', height: '38px' }}>
+                    <SelectValue placeholder="All Units" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Units</SelectItem>
+                    {UNIT_TYPES.map((u) => (<SelectItem key={u.id} value={u.id}>{u.label}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+                <Select value={rbStatus || "all"} onValueChange={(val) => setRbStatus(val === "all" ? "" : val)}>
+                  <SelectTrigger className="form-input" style={{ width: '100%', fontWeight: 500, fontSize: '0.85rem', backgroundColor: 'var(--bg-card)', height: '38px' }}>
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    {["Borrowed", "Repairing", "Returned"].map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+                {rbHasFilters && (
+                  <button className="filter-pill" onClick={() => { clearRbFilters(); setShowRbFilters(false); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", width: "100%" }}>
+                    <FiX size={14} /> Clear Filters
+                  </button>
+                )}
+              </div>
+              <div style={{ position: "fixed", inset: 0, zIndex: 199 }} onClick={() => setShowRbFilters(false)} />
+            </>
+          )}
         </div>
       </div>
       {/* '”€'”€ Records list '”€'”€ */}
@@ -1703,7 +1521,7 @@ function RepairBorrowed() {
       ) : (
         <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
           <div className="table-container">
-            <table className="table">
+            <table className="table preview-table-desktop">
               <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
                 <tr>
                   <th>#</th>
@@ -1957,6 +1775,68 @@ function RepairBorrowed() {
                 ))}
               </tbody>
             </table>
+            
+            <div className="preview-mobile-cards">
+              {filteredRecords.map((rec, idx) => (
+                <div key={rec.id} className="preview-mobile-card" onClick={() => openViewModal(rec)}>
+                  <div className="preview-mobile-card-header">
+                    <span className="preview-mobile-card-title">
+                      <FiMapPin size={14} /> {rec.entity_type === "barangay" ? (rec.barangay || "—") : (rec.offices?.name || "—")}
+                    </span>
+                    <span className="preview-mobile-card-status" style={{
+                      background: rec.status === "Returned" ? "#d1fae5" : "#fef3c7",
+                      color: rec.status === "Returned" ? "#065f46" : "#92400e",
+                      border: `1px solid ${rec.status === "Returned" ? "#6ee7b7" : "#fcd34d"}`,
+                    }}>
+                      {rec.status || "—"}
+                    </span>
+                  </div>
+                  
+                  <div className="preview-mobile-card-body">
+                    <p style={{ margin: "0 0 0.5rem 0", fontWeight: 600 }}>{rec.model || "—"}</p>
+                    <p style={{ margin: "0 0 0.5rem 0", color: "var(--text-secondary)", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <FiUser size={14} /> {rec.name || "—"}
+                    </p>
+                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
+                      <span style={{
+                        padding: "0.2rem 0.6rem", borderRadius: "var(--radius-md)", fontSize: "0.75rem", fontWeight: "600",
+                        background: rec.category === "Borrowed" ? "#eff6ff" : "#f5f3ff",
+                        color: rec.category === "Borrowed" ? "#2563eb" : "#7c3aed",
+                        border: `1px solid ${rec.category === "Borrowed" ? "#bfdbfe" : "#ddd6fe"}`
+                      }}>
+                        {rec.category || "—"}
+                      </span>
+                      {(rec.units || []).map((u) => (
+                        <span key={u.type} style={{
+                          padding: "0.2rem 0.6rem", borderRadius: "var(--radius-md)", fontSize: "0.75rem", fontWeight: "600",
+                          background: "#eff6ff", color: "var(--primary)", border: "1px solid #bfdbfe", display: "flex", alignItems: "center", gap: "0.25rem"
+                        }}>
+                          {unitLabel(u.type)}
+                          {u.quantity > 1 && <span style={{ background: "var(--primary)", color: "white", borderRadius: "999px", padding: "0 0.35rem", fontSize: "0.65rem" }}>×{u.quantity}</span>}
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                      {rec.date && <span><strong>Logged:</strong> {new Date(rec.date).toLocaleString()}</span>}
+                      {rec.status === "Returned" && rec.returned_date && <span><strong>Returned:</strong> {new Date(rec.returned_date).toLocaleString()}</span>}
+                    </div>
+                  </div>
+                  
+                  <div className="preview-mobile-card-footer">
+                    <div style={{ display: "flex", gap: "0.5rem", width: "100%" }}>
+                      {rec.status !== "Returned" && (
+                        <button className="btn btn-small" style={{ flex: 1, background: "#10b981", color: "white", border: "none" }} onClick={(e) => { e.stopPropagation(); openReturnModal(rec); }}>
+                          <FiCheckCircle size={14} /> Return
+                        </button>
+                      )}
+                      <button className="btn btn-small btn-danger" style={{ flex: rec.status !== "Returned" ? "0 0 auto" : 1 }} onClick={(e) => { e.stopPropagation(); handleDelete(rec.id); }}>
+                        <FiTrash2 size={14} /> Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

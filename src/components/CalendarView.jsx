@@ -49,50 +49,53 @@ const CustomToolbar = ({ date, onNavigate, view, onView }) => {
   const years = Array.from({length: 10}, (_, i) => currentYear - 5 + i);
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.25rem' }}>
       
-      {/* Left side: Navigation */}
-      <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: 'var(--bg-elevated)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-        <button type="button" onClick={goToBack} style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}>&lt;</button>
-        <button type="button" onClick={goToCurrent} style={{ padding: '0.4rem 1rem', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 600, boxShadow: 'var(--shadow-sm)' }}>Today</button>
-        <button type="button" onClick={goToNext} style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}>&gt;</button>
+      {/* Top Row: Month/Year Dropdowns & Navigation */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Select value={date.getMonth().toString()} onValueChange={handleMonthChange}>
+            <SelectTrigger className="form-input" style={{ width: 'auto', minWidth: '100px', padding: '0.3rem 0.5rem', fontWeight: 700, fontSize: '1.25rem', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', color: 'var(--text-primary)' }}>
+              <SelectValue placeholder="Month" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((m, i) => (
+                <SelectItem key={i} value={i.toString()}>{m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={date.getFullYear().toString()} onValueChange={handleYearChange}>
+            <SelectTrigger className="form-input" style={{ width: 'auto', minWidth: '80px', padding: '0.3rem 0.5rem', fontWeight: 600, fontSize: '1.1rem', backgroundColor: 'transparent', border: 'none', boxShadow: 'none', color: 'var(--text-secondary)' }}>
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map(y => (
+                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', background: 'var(--bg-elevated)', padding: '0.2rem', borderRadius: 'var(--radius-full)' }}>
+          <button type="button" onClick={goToBack} style={{ padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-full)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}>&lt;</button>
+          <button type="button" onClick={goToCurrent} style={{ padding: '0.3rem 1rem', borderRadius: 'var(--radius-full)', border: 'none', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 600, boxShadow: 'var(--shadow-sm)' }}>Today</button>
+          <button type="button" onClick={goToNext} style={{ padding: '0.3rem 0.6rem', borderRadius: 'var(--radius-full)', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}>&gt;</button>
+        </div>
       </div>
 
-      {/* Center: Month/Year Dropdowns */}
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-        <Select value={date.getMonth().toString()} onValueChange={handleMonthChange}>
-          <SelectTrigger className="form-input" style={{ width: '130px', padding: '0.4rem 0.75rem', fontWeight: 600, fontSize: '0.95rem', backgroundColor: 'var(--bg-card)' }}>
-            <SelectValue placeholder="Month" />
-          </SelectTrigger>
-          <SelectContent>
-            {months.map((m, i) => (
-              <SelectItem key={i} value={i.toString()}>{m}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={date.getFullYear().toString()} onValueChange={handleYearChange}>
-          <SelectTrigger className="form-input" style={{ width: '100px', padding: '0.4rem 0.75rem', fontWeight: 600, fontSize: '0.95rem', backgroundColor: 'var(--bg-card)' }}>
-            <SelectValue placeholder="Year" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map(y => (
-              <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Right side: View Toggle */}
-      <div style={{ display: 'flex', background: 'var(--bg-elevated)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+      {/* Bottom Row: View Toggle */}
+      <div style={{ display: 'flex', background: 'var(--bg-elevated)', padding: '0.25rem', borderRadius: 'var(--radius-lg)', width: '100%' }}>
         {['month', 'week', 'day', 'agenda'].map(v => (
           <button 
             key={v}
             type="button"
             onClick={() => onView(v)}
             style={{ 
-              padding: '0.4rem 1rem', 
-              borderRadius: 'var(--radius-sm)',
+              flex: 1,
+              padding: '0.4rem 0', 
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               background: view === v ? 'var(--bg-card)' : 'transparent',
               color: view === v ? 'var(--primary)' : 'var(--text-secondary)',
@@ -100,14 +103,14 @@ const CustomToolbar = ({ date, onNavigate, view, onView }) => {
               cursor: 'pointer',
               textTransform: 'capitalize',
               boxShadow: view === v ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              fontSize: '0.85rem'
             }}
           >
             {v}
           </button>
         ))}
       </div>
-
     </div>
   );
 };
@@ -189,25 +192,24 @@ export default function CalendarView() {
 
 
   const eventStyleGetter = (event, start, end, isSelected) => {
-    let style = {
-      borderRadius: 'var(--radius-md)',
-      opacity: 0.9,
-      color: 'white',
-      border: '0px',
-      display: 'block',
-      padding: '2px 6px',
-      fontSize: '0.85rem'
-    };
-
-    if (event.resource.category === 'leave') {
-      const isOffset = event.resource.type?.toLowerCase() === 'offset';
-      style.backgroundColor = isOffset ? 'var(--warning)' : 'var(--danger)';
-    } else {
-      style.backgroundColor = 'var(--primary)';
+    let bgColor = 'var(--primary)';
+    if (event.resource?.category === 'leave') {
+      bgColor = event.resource?.type?.toLowerCase() === 'leave' ? 'var(--danger)' : 'var(--warning)';
     }
 
     return {
-      style: style
+      style: {
+        '--event-color': bgColor,
+        backgroundColor: bgColor,
+        borderRadius: '4px',
+        opacity: 0.9,
+        color: 'white',
+        border: 'none',
+        display: 'block',
+        fontSize: '0.8rem',
+        fontWeight: '500',
+        padding: '2px 6px'
+      }
     };
   };
 
@@ -226,7 +228,7 @@ export default function CalendarView() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="card" style={{ flex: 1, padding: "1.5rem", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="card calendar-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
         <div style={{ marginBottom: "1rem", display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -244,28 +246,25 @@ export default function CalendarView() {
           <button className="btn btn-outline" style={{ marginLeft: 'auto', padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={fetchData}>↻ Refresh Data</button>
         </div>
 
-        <div style={{ flex: 1, minHeight: "500px" }}>
-          {/* Injecting some basic styles overrides for Big Calendar to match theme */}
+        <div className="calendar-inner-container" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {/* Injecting some global overrides for this specific instance if needed */}
           <style dangerouslySetInnerHTML={{__html: `
-            .rbc-calendar {
-              font-family: inherit;
-              color: var(--text-primary);
+            .rbc-month-view, .rbc-time-view, .rbc-agenda-view {
+              border: 1px solid var(--border) !important;
+              border-radius: var(--radius-lg);
+              overflow: hidden;
             }
             .rbc-header {
-              padding: 0.5rem !important;
-              font-weight: 600 !important;
+              padding: 0.75rem 0.5rem !important;
+              font-weight: 700 !important;
+              color: var(--text-secondary);
               border-bottom: 1px solid var(--border) !important;
-              border-left: 1px solid var(--border) !important;
-              background-color: var(--bg-elevated);
+              text-transform: uppercase;
+              font-size: 0.75rem;
+              letter-spacing: 0.05em;
             }
-            .rbc-month-view, .rbc-time-view, .rbc-agenda-view {
-              border-color: var(--border) !important;
-            }
-            .rbc-day-bg {
-              border-left: 1px solid var(--border) !important;
-            }
-            .rbc-month-row {
-              border-top: 1px solid var(--border) !important;
+            .rbc-day-bg + .rbc-day-bg, .rbc-month-row + .rbc-month-row {
+              border-color: rgba(0,0,0,0.04) !important;
             }
             .rbc-off-range-bg {
               background-color: var(--bg-body) !important;
@@ -273,23 +272,67 @@ export default function CalendarView() {
             .rbc-today {
               background-color: rgba(var(--primary-rgb), 0.05) !important;
             }
+            @media (max-width: 768px) {
+              .rbc-header {
+                font-size: 0.65rem;
+                padding: 0.5rem 0.15rem !important;
+              }
+              .rbc-event {
+                background-color: transparent !important;
+                color: var(--text-primary) !important;
+                padding: 1px 2px !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 4px;
+                font-size: 0.65rem !important;
+                font-weight: 600 !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+              .rbc-event::before {
+                content: "";
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background-color: var(--event-color, var(--primary));
+                flex-shrink: 0;
+              }
+              .rbc-event-content {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              .rbc-date-cell {
+                padding-right: 4px !important;
+                font-size: 0.75rem;
+                font-weight: 600;
+              }
+              .rbc-month-view, .rbc-time-view, .rbc-agenda-view {
+                border-radius: 0;
+                border-left: none !important;
+                border-right: none !important;
+              }
+            }
           `}} />
-          <Calendar
-            localizer={localizer}
-            events={events}
-            date={date}
-            onNavigate={setDate}
-            view={view}
-            onView={setView}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: '100%' }}
-            eventPropGetter={eventStyleGetter}
-            onSelectEvent={handleSelectEvent}
-            popup
-            views={['month', 'week', 'day', 'agenda']}
-            components={{ toolbar: CustomToolbar }}
-          />
+          <div style={{ flex: 1, minHeight: '500px' }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              date={date}
+              onNavigate={setDate}
+              view={view}
+              onView={setView}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              eventPropGetter={eventStyleGetter}
+              onSelectEvent={handleSelectEvent}
+              popup
+              views={['month', 'week', 'day', 'agenda']}
+              components={{ toolbar: CustomToolbar }}
+            />
+          </div>
         </div>
       </div>
 

@@ -242,7 +242,7 @@ export default function LeaveManagement() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem" }}>
+      <div className="stats-grid-3">
         {[
           { label: "Total Records", value: records.length, color: "var(--primary)" },
           { label: "Leaves", value: typeStats["Leave"] || 0, color: "var(--danger)" },
@@ -265,7 +265,8 @@ export default function LeaveManagement() {
             <p>No records yet. Click <strong>Add Record</strong> to get started.</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
+          <>
+          <div className="table-container preview-table-desktop" style={{ overflowX: "auto", border: "none" }}>
             <table className="table">
               <thead>
                 <tr>
@@ -300,6 +301,36 @@ export default function LeaveManagement() {
               </tbody>
             </table>
           </div>
+          
+          <div className="preview-mobile-cards" style={{ padding: "1rem" }}>
+            {records.map(r => (
+              <div key={r.id} className="preview-ticket-card">
+                <div className="preview-card-top">
+                  <span className="preview-card-name" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <FiUser size={14} style={{ color: "var(--text-muted)" }} />
+                    {r.officer_name}
+                  </span>
+                  <span className="preview-card-status">
+                    <span className={`badge ${r.type === "Leave" ? "badge-error" : "badge-warning"}`}>{r.type}</span>
+                  </span>
+                </div>
+                <div className="preview-card-bottom" style={{ marginBottom: r.reason ? "0.25rem" : "0.75rem" }}>
+                  <span className="preview-card-date">{fmtRange(r.start_date, r.end_date)}</span>
+                </div>
+                {r.reason && (
+                  <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+                    {r.reason}
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <button className="btn btn-ghost" style={{ padding: "0.35rem 0.75rem", color: "var(--danger)", height: "auto" }} onClick={() => handleDelete(r.id)}>
+                    <FiTrash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </div>
 

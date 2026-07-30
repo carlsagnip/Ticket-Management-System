@@ -44,6 +44,7 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
   const [showTicketForm, setShowTicketForm] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     fetchTickets();
@@ -502,25 +503,10 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
         </div>
       </div>
 
-      {/* Search and Filters Row - All in one line */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.75rem",
-          flexWrap: "wrap",
-          alignItems: "center",
-          marginBottom: "1rem",
-          flexShrink: 0,
-        }}
-      >
+      {/* Search and Filters Row */}
+      <div className="preview-filters" style={{ display: "flex", gap: "0.5rem", alignItems: "center", position: "relative", flexWrap: "nowrap" }}>
         {/* Search Field */}
-        <div
-          style={{
-            position: "relative",
-            flex: "1",
-            minWidth: "200px",
-          }}
-        >
+        <div style={{ position: "relative", flex: "1", minWidth: "200px" }}>
           <FiSearch
             style={{
               position: "absolute",
@@ -538,498 +524,193 @@ function TicketList({ categoryFilter: initialCategoryFilter = "All" }) {
             placeholder="Search tickets..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              paddingLeft: "2.5rem",
-              margin: 0,
-              height: "38px",
-            }}
+            style={{ paddingLeft: "2.5rem", margin: 0, height: "38px" }}
           />
         </div>
 
-        {/* All Filter Buttons - Grouped together */}
-        <div
-          style={{
-            display: "flex",
-            gap: "0.5rem",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          {/* Date Filter Dropdown */}
+        {/* Desktop Filter Buttons — hidden on mobile */}
+        <div className="preview-filters-desktop">
+          {/* Date Filter */}
           <div style={{ position: "relative" }}>
             <button
               className={`filter-pill ${dateFilter !== "All" ? "active" : ""}`}
               onClick={() => setShowDateDropdown(!showDateDropdown)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
             >
               <FiCalendar size={16} />
-              {dateFilter === "All"
-                ? "All Time"
-                : dateFilter === "Custom"
-                  ? "Custom Range"
-                  : dateFilter}
+              {dateFilter === "All" ? "All Time" : dateFilter === "Custom" ? "Custom Range" : dateFilter}
             </button>
-
-            {/* Date Dropdown Menu */}
             {showDateDropdown && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  marginTop: "0.5rem",
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "var(--shadow-lg)",
-                  zIndex: 50,
-                  minWidth: "180px",
-                  overflow: "hidden",
-                }}
-              >
-                {[
-                  { value: "All", label: "All Time" },
-                  { value: "Today", label: "Today" },
-                  { value: "1 Week", label: "1 Week" },
-                  { value: "1 Month", label: "1 Month" },
-                  { value: "3 Months", label: "3 Months" },
-                  { value: "1 Year", label: "1 Year" },
-                  { value: "Custom", label: "Custom Range" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setDateFilter(option.value);
-                      if (option.value === "Custom") {
-                        setShowCustomDatePicker(true);
-                      } else {
-                        setShowCustomDatePicker(false);
-                      }
-                      setShowDateDropdown(false);
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      border: "none",
-                      background:
-                        dateFilter === option.value
-                          ? "var(--primary)"
-                          : "transparent",
-                      color:
-                        dateFilter === option.value
-                          ? "white"
-                          : "var(--text-primary)",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (dateFilter !== option.value) {
-                        e.target.style.background = "var(--bg-elevated)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (dateFilter !== option.value) {
-                        e.target.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    <FiCalendar size={14} />
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Click outside to close date dropdown */}
-            {showDateDropdown && (
-              <div
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 40,
-                }}
-                onClick={() => setShowDateDropdown(false)}
-              />
+              <>
+                <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50, minWidth: "180px", overflow: "hidden" }}>
+                  {[{ value: "All", label: "All Time" }, { value: "Today", label: "Today" }, { value: "1 Week", label: "1 Week" }, { value: "1 Month", label: "1 Month" }, { value: "3 Months", label: "3 Months" }, { value: "1 Year", label: "1 Year" }, { value: "Custom", label: "Custom Range" }].map((option) => (
+                    <button key={option.value} onClick={() => { setDateFilter(option.value); setShowCustomDatePicker(option.value === "Custom"); setShowDateDropdown(false); }} style={{ width: "100%", padding: "0.75rem 1rem", border: "none", background: dateFilter === option.value ? "var(--primary)" : "transparent", color: dateFilter === option.value ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", fontWeight: "500" }}>
+                      <FiCalendar size={14} />{option.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowDateDropdown(false)} />
+              </>
             )}
           </div>
 
-          {/* Status Filter Dropdown */}
+          {/* Status Filter */}
           <div style={{ position: "relative" }}>
-            <button
-              className={`filter-pill ${statusFilter !== "All" ? "active" : ""}`}
-              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
+            <button className={`filter-pill ${statusFilter !== "All" ? "active" : ""}`} onClick={() => setShowStatusDropdown(!showStatusDropdown)} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <FiFilter size={16} />
-              {statusFilter === "All"
-                ? `All (${stats.total})`
-                : statusFilter === "Open"
-                  ? `Open (${stats.open})`
-                  : statusFilter === "In Progress"
-                    ? `In Progress (${stats.inProgress})`
-                    : statusFilter === "Resolved"
-                      ? `Resolved (${stats.resolved})`
-                      : `Closed (${stats.closed})`}
+              {statusFilter === "All" ? `All (${stats.total})` : statusFilter === "Open" ? `Open (${stats.open})` : statusFilter === "In Progress" ? `In Progress (${stats.inProgress})` : statusFilter === "Resolved" ? `Resolved (${stats.resolved})` : `Closed (${stats.closed})`}
             </button>
-
-            {/* Status Dropdown Menu */}
             {showStatusDropdown && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  left: 0,
-                  marginTop: "0.5rem",
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "var(--shadow-lg)",
-                  zIndex: 50,
-                  minWidth: "200px",
-                  overflow: "hidden",
-                }}
-              >
-                {[
-                  {
-                    value: "All",
-                    label: "All",
-                    count: stats.total,
-                    icon: <FiFilter size={14} />,
-                  },
-                  {
-                    value: "Open",
-                    label: "Open",
-                    count: stats.open,
-                    icon: <FiFileText size={14} />,
-                  },
-                  {
-                    value: "In Progress",
-                    label: "In Progress",
-                    count: stats.inProgress,
-                    icon: <FiClock size={14} />,
-                  },
-                  {
-                    value: "Resolved",
-                    label: "Resolved",
-                    count: stats.resolved,
-                    icon: <FiCheckCircle size={14} />,
-                  },
-                  {
-                    value: "Closed",
-                    label: "Closed",
-                    count: stats.closed,
-                    icon: <FiXCircle size={14} />,
-                  },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setStatusFilter(option.value);
-                      setShowStatusDropdown(false);
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      border: "none",
-                      background:
-                        statusFilter === option.value
-                          ? "var(--primary)"
-                          : "transparent",
-                      color:
-                        statusFilter === option.value
-                          ? "white"
-                          : "var(--text-primary)",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "0.5rem",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (statusFilter !== option.value) {
-                        e.target.style.background = "var(--bg-elevated)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (statusFilter !== option.value) {
-                        e.target.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                      }}
-                    >
-                      {option.icon}
-                      {option.label}
-                    </span>
-                    <span
-                      style={{
-                        background:
-                          statusFilter === option.value
-                            ? "rgba(255,255,255,0.2)"
-                            : "var(--bg-elevated)",
-                        padding: "0.125rem 0.5rem",
-                        borderRadius: "9999px",
-                        fontSize: "0.75rem",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {option.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Click outside to close status dropdown */}
-            {showStatusDropdown && (
-              <div
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 40,
-                }}
-                onClick={() => setShowStatusDropdown(false)}
-              />
+              <>
+                <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50, minWidth: "200px", overflow: "hidden" }}>
+                  {[{ value: "All", label: "All", count: stats.total, icon: <FiFilter size={14} /> }, { value: "Open", label: "Open", count: stats.open, icon: <FiFileText size={14} /> }, { value: "In Progress", label: "In Progress", count: stats.inProgress, icon: <FiClock size={14} /> }, { value: "Resolved", label: "Resolved", count: stats.resolved, icon: <FiCheckCircle size={14} /> }, { value: "Closed", label: "Closed", count: stats.closed, icon: <FiXCircle size={14} /> }].map((option) => (
+                    <button key={option.value} onClick={() => { setStatusFilter(option.value); setShowStatusDropdown(false); }} style={{ width: "100%", padding: "0.75rem 1rem", border: "none", background: statusFilter === option.value ? "var(--primary)" : "transparent", color: statusFilter === option.value ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", fontSize: "0.875rem", fontWeight: "500" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>{option.icon}{option.label}</span>
+                      <span style={{ background: statusFilter === option.value ? "rgba(255,255,255,0.2)" : "var(--bg-elevated)", padding: "0.125rem 0.5rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: "600" }}>{option.count}</span>
+                    </button>
+                  ))}
+                </div>
+                <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowStatusDropdown(false)} />
+              </>
             )}
           </div>
 
-          {/* Sort Dropdown */}
+          {/* Sort */}
           <div style={{ position: "relative" }}>
-            <button
-              className="filter-pill"
-              onClick={() => setShowSortDropdown(!showSortDropdown)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
-              {sortBy === "newest" ? "Newest" : "Oldest"}
-              <FiChevronDown size={14} />
+            <button className="filter-pill" onClick={() => setShowSortDropdown(!showSortDropdown)} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              {sortBy === "newest" ? "Newest" : "Oldest"}<FiChevronDown size={14} />
             </button>
-
-            {/* Sort Dropdown Menu */}
             {showSortDropdown && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  right: 0,
-                  marginTop: "0.5rem",
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "var(--shadow-lg)",
-                  zIndex: 50,
-                  minWidth: "140px",
-                  overflow: "hidden",
-                }}
-              >
-                {[
-                  { value: "newest", label: "Newest First" },
-                  { value: "oldest", label: "Oldest First" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setSortBy(option.value);
-                      setShowSortDropdown(false);
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem 1rem",
-                      border: "none",
-                      background:
-                        sortBy === option.value
-                          ? "var(--primary)"
-                          : "transparent",
-                      color:
-                        sortBy === option.value
-                          ? "white"
-                          : "var(--text-primary)",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      fontWeight: "500",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (sortBy !== option.value) {
-                        e.target.style.background = "var(--bg-elevated)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (sortBy !== option.value) {
-                        e.target.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Click outside to close sort dropdown */}
-            {showSortDropdown && (
-              <div
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 40,
-                }}
-                onClick={() => setShowSortDropdown(false)}
-              />
+              <>
+                <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50, minWidth: "140px", overflow: "hidden" }}>
+                  {[{ value: "newest", label: "Newest First" }, { value: "oldest", label: "Oldest First" }].map((option) => (
+                    <button key={option.value} onClick={() => { setSortBy(option.value); setShowSortDropdown(false); }} style={{ width: "100%", padding: "0.75rem 1rem", border: "none", background: sortBy === option.value ? "var(--primary)" : "transparent", color: sortBy === option.value ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem", fontWeight: "500" }}>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowSortDropdown(false)} />
+              </>
             )}
           </div>
 
-          {/* Office Filter Dropdown */}
-          <div
-            className="preview-office-filter"
-            style={{ position: "relative" }}
-          >
-            <button
-              className={`filter-pill ${officeFilter !== "All" ? "active" : ""}`}
-              onClick={() => setShowOfficeDropdown(!showOfficeDropdown)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                maxWidth: "150px",
-              }}
-            >
-              <span
-                style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {officeFilter === "All"
-                  ? "All Offices"
-                  : offices.find((o) => o.id === officeFilter)?.name ||
-                    officeFilter}
-              </span>
+          {/* Office Filter */}
+          <div className="preview-office-filter" style={{ position: "relative" }}>
+            <button className={`filter-pill ${officeFilter !== "All" ? "active" : ""}`} onClick={() => setShowOfficeDropdown(!showOfficeDropdown)} style={{ display: "flex", alignItems: "center", gap: "0.5rem", maxWidth: "150px" }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{officeFilter === "All" ? "All Offices" : offices.find((o) => o.id === officeFilter)?.name || officeFilter}</span>
               <FiChevronDown size={14} style={{ flexShrink: 0 }} />
             </button>
-
-            {/* Office Dropdown Menu */}
             {showOfficeDropdown && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  right: 0,
-                  marginTop: "0.5rem",
-                  background: "var(--bg-card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  boxShadow: "var(--shadow-lg)",
-                  zIndex: 50,
-                  minWidth: "200px",
-                  maxWidth: "300px",
-                  maxHeight: "300px",
-                  overflow: "auto",
-                }}
-              >
-                {[{ id: "All", name: "All Offices" }, ...offices].map(
-                  (option) => (
-                    <button
-                      key={option.id}
-                      onClick={() => {
-                        setOfficeFilter(option.id);
-                        setShowOfficeDropdown(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem 1rem",
-                        border: "none",
-                        background:
-                          officeFilter === option.id
-                            ? "var(--primary)"
-                            : "transparent",
-                        color:
-                          officeFilter === option.id
-                            ? "white"
-                            : "var(--text-primary)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (officeFilter !== option.id) {
-                          e.target.style.background = "var(--bg-elevated)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (officeFilter !== option.id) {
-                          e.target.style.background = "transparent";
-                        }
-                      }}
-                    >
+              <>
+                <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50, minWidth: "200px", maxWidth: "300px", maxHeight: "300px", overflow: "auto" }}>
+                  {[{ id: "All", name: "All Offices" }, ...offices].map((option) => (
+                    <button key={option.id} onClick={() => { setOfficeFilter(option.id); setShowOfficeDropdown(false); }} style={{ width: "100%", padding: "0.75rem 1rem", border: "none", background: officeFilter === option.id ? "var(--primary)" : "transparent", color: officeFilter === option.id ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem", fontWeight: "500" }}>
                       {option.name}
                     </button>
-                  ),
-                )}
-              </div>
-            )}
-
-            {/* Click outside to close office dropdown */}
-            {showOfficeDropdown && (
-              <div
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 40,
-                }}
-                onClick={() => setShowOfficeDropdown(false)}
-              />
+                  ))}
+                </div>
+                <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setShowOfficeDropdown(false)} />
+              </>
             )}
           </div>
 
-          {/* Export Button - Compact */}
-          <button
-            className="filter-pill active"
-            onClick={exportToPDF}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              background: "var(--primary)",
-              borderColor: "var(--primary)",
-              color: "white",
-            }}
-            title={`Export PDF (${filteredTickets.length})`}
-          >
+          {/* Export Button */}
+          <button className="filter-pill active" onClick={exportToPDF} style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "var(--primary)", borderColor: "var(--primary)", color: "white", whiteSpace: "nowrap" }}>
             <FiDownload size={16} />
-            <span>{filteredTickets.length}</span>
+            Download ({filteredTickets.length})
           </button>
         </div>
+
+        {/* Mobile: Filter toggle button — only visible on small screens */}
+        <button
+          className="mobile-filter-btn filter-pill"
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}
+        >
+          <FiFilter size={16} />
+          Filters
+        </button>
+
+        {/* Mobile filter popup — positioned below the search bar */}
+        {showMobileFilters && (
+          <>
+            <div style={{ position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "min(280px, 90vw)", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "1rem", boxShadow: "var(--shadow-xl)", zIndex: 200, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {/* Date */}
+              <div style={{ position: "relative" }}>
+                <button className={`filter-pill ${dateFilter !== "All" ? "active" : ""}`} onClick={() => setShowDateDropdown(!showDateDropdown)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><FiCalendar size={15} /> Date</span>
+                  <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>{dateFilter === "All" ? "All Time" : dateFilter === "Custom" ? "Custom" : dateFilter}</span>
+                </button>
+                {showDateDropdown && (
+                  <>
+                    <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 300, minWidth: "100%", overflow: "hidden" }}>
+                      {[{ value: "All", label: "All Time" }, { value: "Today", label: "Today" }, { value: "1 Week", label: "1 Week" }, { value: "1 Month", label: "1 Month" }, { value: "3 Months", label: "3 Months" }, { value: "1 Year", label: "1 Year" }, { value: "Custom", label: "Custom Range" }].map((option) => (
+                        <button key={option.value} onClick={() => { setDateFilter(option.value); setShowCustomDatePicker(option.value === "Custom"); setShowDateDropdown(false); }} style={{ width: "100%", padding: "0.65rem 1rem", border: "none", background: dateFilter === option.value ? "var(--primary)" : "transparent", color: dateFilter === option.value ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem" }}>
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ position: "fixed", inset: 0, zIndex: 290 }} onClick={() => setShowDateDropdown(false)} />
+                  </>
+                )}
+              </div>
+
+              {/* Status */}
+              <div style={{ position: "relative" }}>
+                <button className={`filter-pill ${statusFilter !== "All" ? "active" : ""}`} onClick={() => setShowStatusDropdown(!showStatusDropdown)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><FiFilter size={15} /> Status</span>
+                  <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>{statusFilter === "All" ? `All (${stats.total})` : `${statusFilter} (${statusFilter === "Open" ? stats.open : statusFilter === "In Progress" ? stats.inProgress : statusFilter === "Resolved" ? stats.resolved : stats.closed})`}</span>
+                </button>
+                {showStatusDropdown && (
+                  <>
+                    <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 300, minWidth: "100%", overflow: "hidden" }}>
+                      {[{ value: "All", label: "All", count: stats.total }, { value: "Open", label: "Open", count: stats.open }, { value: "In Progress", label: "In Progress", count: stats.inProgress }, { value: "Resolved", label: "Resolved", count: stats.resolved }, { value: "Closed", label: "Closed", count: stats.closed }].map((option) => (
+                        <button key={option.value} onClick={() => { setStatusFilter(option.value); setShowStatusDropdown(false); }} style={{ width: "100%", padding: "0.65rem 1rem", border: "none", background: statusFilter === option.value ? "var(--primary)" : "transparent", color: statusFilter === option.value ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem", display: "flex", justifyContent: "space-between" }}>
+                          <span>{option.label}</span><span style={{ opacity: 0.7 }}>{option.count}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ position: "fixed", inset: 0, zIndex: 290 }} onClick={() => setShowStatusDropdown(false)} />
+                  </>
+                )}
+              </div>
+
+              {/* Sort */}
+              <button className="filter-pill" onClick={() => { setSortBy(sortBy === "newest" ? "oldest" : "newest"); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
+                <span>Sort</span>
+                <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>{sortBy === "newest" ? "Newest First" : "Oldest First"}</span>
+              </button>
+
+              {/* Office Filter */}
+              <div style={{ position: "relative" }}>
+                <button className={`filter-pill ${officeFilter !== "All" ? "active" : ""}`} onClick={() => setShowOfficeDropdown(!showOfficeDropdown)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "0.5rem" }}>
+                  <span>Office</span>
+                  <span style={{ fontSize: "0.8rem", opacity: 0.8, maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{officeFilter === "All" ? "All" : offices.find((o) => o.id === officeFilter)?.name || officeFilter}</span>
+                </button>
+                {showOfficeDropdown && (
+                  <>
+                    <div style={{ position: "absolute", top: "100%", left: 0, marginTop: "0.5rem", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 300, minWidth: "100%", maxHeight: "200px", overflow: "auto" }}>
+                      {[{ id: "All", name: "All Offices" }, ...offices].map((option) => (
+                        <button key={option.id} onClick={() => { setOfficeFilter(option.id); setShowOfficeDropdown(false); }} style={{ width: "100%", padding: "0.65rem 1rem", border: "none", background: officeFilter === option.id ? "var(--primary)" : "transparent", color: officeFilter === option.id ? "white" : "var(--text-primary)", textAlign: "left", cursor: "pointer", fontSize: "0.875rem" }}>
+                          {option.name}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ position: "fixed", inset: 0, zIndex: 290 }} onClick={() => setShowOfficeDropdown(false)} />
+                  </>
+                )}
+              </div>
+
+              {/* Download */}
+              <button className="filter-pill active" onClick={() => { exportToPDF(); setShowMobileFilters(false); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", background: "var(--primary)", borderColor: "var(--primary)", color: "white", width: "100%" }}>
+                <FiDownload size={16} />
+                Download ({filteredTickets.length})
+              </button>
+            </div>
+            {/* Backdrop to close popup */}
+            <div style={{ position: "fixed", inset: 0, zIndex: 199 }} onClick={() => setShowMobileFilters(false)} />
+          </>
+        )}
       </div>
 
       {/* Custom Date Picker - Shows when Custom Range is selected */}

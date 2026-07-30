@@ -219,6 +219,85 @@ function AdminDashboard() {
           .admin-layout {
             flex-direction: column;
           }
+          .dashboard-content {
+            padding: 1rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .admin-sidebar {
+            width: 100% !important;
+            max-width: 100% !important;
+            top: auto;
+            bottom: 0;
+            height: auto;
+            max-height: 85vh;
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            transform: translateY(100%);
+            border-right: none;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+          .admin-sidebar.mobile-open {
+            transform: translateY(0);
+          }
+          .admin-sidebar.mobile-open .nav-button {
+            animation: mobileItemSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+          .admin-sidebar.mobile-open .nav-button:nth-child(1) { animation-delay: 0.04s; }
+          .admin-sidebar.mobile-open .nav-button:nth-child(2) { animation-delay: 0.08s; }
+          .admin-sidebar.mobile-open .nav-button:nth-child(3) { animation-delay: 0.12s; }
+          .admin-sidebar.mobile-open .nav-button:nth-child(4) { animation-delay: 0.16s; }
+          .admin-sidebar.mobile-open .nav-button:nth-child(5) { animation-delay: 0.20s; }
+          .admin-sidebar.mobile-open .nav-button:nth-child(6) { animation-delay: 0.24s; }
+          .admin-sidebar.mobile-open .nav-button:nth-child(7) { animation-delay: 0.28s; }
+          .admin-sidebar.mobile-open .nav-button:nth-child(8) { animation-delay: 0.32s; }
+          
+          .nav-button {
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+          }
+          .sidebar-toggle-btn {
+            display: none !important;
+          }
+        }
+        
+        /* Burger Button Micro-Animations */
+        .burger-btn {
+          transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease !important;
+        }
+        .burger-btn:active, .burger-btn.burger-active {
+          transform: scale(0.82) rotate(-90deg) !important;
+          background-color: var(--bg-elevated) !important;
+        }
+        .burger-btn svg {
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .burger-btn:hover svg {
+          transform: scale(1.15);
+        }
+
+        @keyframes mobileItemSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(18px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @media (min-width: 1025px) {
+          .dashboard-content {
+            padding: 2rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
         }
       `,
         }}
@@ -407,23 +486,17 @@ function AdminDashboard() {
               </div>
             </div>
             <button
-              className="btn btn-icon btn-ghost"
-              onClick={() => setShowMobileMenu(true)}
+              className={`btn btn-icon btn-ghost burger-btn ${showMobileMenu ? "burger-active" : ""}`}
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              aria-label="Toggle navigation menu"
             >
-              <FiMenu size={24} />
+              <FiMenu size={26} />
             </button>
           </div>
 
           {/* Scrolling Content Area */}
           <div className="main-scroll-area">
-            <div
-              style={{
-                padding: "2rem",
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
+            <div className="dashboard-content">
               <div
                 style={{
                   marginBottom: "1.5rem",

@@ -484,13 +484,7 @@ function Overview({ onNavigate }) {
       </div>
 
       {/* Charts Row 1: Tickets Over Time + Status Pie */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "2fr 1fr",
-          gap: "1rem",
-        }}
-      >
+      <div className="overview-grid-2">
         {/* Tickets Over Time */}
         <div
           style={{
@@ -661,13 +655,7 @@ function Overview({ onNavigate }) {
       </div>
 
       {/* Charts Row 2: Top Offices Bar + Priority Pie + Inventory */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: "1rem",
-        }}
-      >
+      <div className="overview-grid-3">
         {/* Top Offices */}
         <div
           style={{
@@ -879,13 +867,7 @@ function Overview({ onNavigate }) {
       </div>
 
       {/* Bottom Row: Module Quick Stats */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "1rem",
-        }}
-      >
+      <div className="overview-grid-2">
         {/* Repair/Borrowed Overview */}
         <div
           style={{
@@ -930,13 +912,7 @@ function Overview({ onNavigate }) {
               View All <FiArrowUpRight size={14} />
             </button>
           </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "1rem",
-            }}
-          >
+          <div className="overview-repair-grid">
             {[
               {
                 label: "Pending",
