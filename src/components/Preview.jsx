@@ -17,12 +17,13 @@ import {
   FiChevronDown,
   FiLock,
   FiPlus,
+  FiShield,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import SearchableSelect from "../components/SearchableSelect";
 import LoginModal from "./LoginModal";
 
-function Preview() {
+function Preview({ session }) {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [offices, setOffices] = useState([]);
@@ -1337,9 +1338,15 @@ function Preview() {
             />
           )}
 
-          {/* Login Button */}
+          {/* Login / Dashboard Button */}
           <button
-            onClick={() => setShowLoginModal(true)}
+            onClick={() => {
+              if (session) {
+                navigate("/admin/dashboard");
+              } else {
+                setShowLoginModal(true);
+              }
+            }}
             className="btn btn-icon login-btn-anim"
             style={{
               position: "fixed",
@@ -1357,9 +1364,13 @@ function Preview() {
               cursor: "pointer",
               borderRadius: "50%",
             }}
-            title="Admin Login"
+            title={session ? "Go to Admin Dashboard" : "Admin Login"}
           >
-            <FiLock size={24} style={{ color: "white" }} />
+            {session ? (
+              <FiShield size={24} style={{ color: "white" }} />
+            ) : (
+              <FiLock size={24} style={{ color: "white" }} />
+            )}
           </button>
         </div>
       </div>

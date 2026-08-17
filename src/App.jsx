@@ -25,6 +25,7 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -43,7 +44,16 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Preview />} />
+          <Route
+            path="/"
+            element={
+              session ? (
+                <Navigate to="/admin/dashboard" replace />
+              ) : (
+                <Preview session={session} />
+              )
+            }
+          />
           <Route path="/submit" element={<TicketForm />} />
           <Route path="/live" element={<LivePreview />} />
           {/* Protected Admin Routes */}

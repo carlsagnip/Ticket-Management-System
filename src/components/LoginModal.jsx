@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { FiLock, FiMail, FiKey, FiShield, FiAlertCircle, FiX } from "react-icons/fi";
@@ -9,6 +9,14 @@ function LoginModal({ onClose }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/admin/dashboard");
+      }
+    });
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
